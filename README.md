@@ -16,10 +16,10 @@ A patient-facing healthcare portal for surgical waitlist management. Built to re
 
 | Token | Value | Use |
 |---|---|---|
-| `--primary` | `#16A34A` — Green 600 | Buttons, active states, focus rings, icons |
+| `--primary` | `#2563EB` — Blue 600 | Buttons, active states, focus rings, icons |
 | `--primary-foreground` | `#FFFFFF` | Text on primary bg |
-| `--secondary` | `#22C55E` — Green 500 | Muted actions |
-| `--secondary-foreground` | `#14532D` — Green 900 | Text on secondary bg |
+| `--secondary` | `#3B82F6` — Blue 500 | Muted actions |
+| `--secondary-foreground` | `#1E3A8A` — Blue 900 | Text on secondary bg |
 
 Use Tailwind semantics: `bg-primary`, `text-primary`, `border-primary`, `ring-primary`.
 
@@ -40,7 +40,7 @@ Use Tailwind semantics: `bg-primary`, `text-primary`, `border-primary`, `ring-pr
 ## Development
 
 ```bash
-npm run dev      # Start dev server (port 5000)
+npm run dev      # Start dev server (port 5173)
 npm run build    # Production build
 npm start        # Run production build
 ```
