@@ -10,8 +10,9 @@ This file defines the universal design language, component rules, and coding con
 **Tone:** Calm, trustworthy, clear. Never clinical or cold. Never playful or frivolous.
 **Audience:** Patients navigating complex, often anxious healthcare journeys. Every UI decision should reduce cognitive load and build confidence.
 **Tech Stack:** React 18 + TypeScript + Tailwind CSS v3 + Shadcn/ui (Radix primitives) + Lucide React icons + Vite.
-**Favicon:** `client/public/favicon.svg` — blue rounded square (`#2563EB`) with white "Q" glyph. SVG format for crisp rendering at all sizes.
+**Favicon:** `client/public/favicon.svg` — green rounded square (`#16A34A`) with white "Q" glyph. SVG format for crisp rendering at all sizes.
 **Note:** This project is fully off Replit. No `@replit/*` packages or `REPL_ID` environment checks anywhere.
+**Dev server:** Never use port 5000 — it is reserved and will conflict. Use a different port (e.g. 3000, 5173) when starting the dev server.
 
 ---
 
@@ -21,16 +22,16 @@ All tokens live in two places: CSS custom properties in `client/src/index.css` a
 
 ### 2.1 Colors
 
-#### Brand Palette (Blue)
+#### Brand Palette (Green)
 
 ```css
 /* Primary — buttons, active states, focus rings, icons */
---primary: 221 83% 53%;           /* #2563EB — Blue 600 */
+--primary: 142 76% 36%;           /* #16A34A — Green 600 */
 --primary-foreground: 0 0% 100%;  /* White */
 
 /* Secondary — muted actions */
---secondary: 217 91% 60%;         /* #3B82F6 — Blue 500 */
---secondary-foreground: 224 76% 20%; /* #1E3A8A — Blue 900 */
+--secondary: 142 72% 45%;         /* #22C55E — Green 500 */
+--secondary-foreground: 144 61% 20%; /* #14532D — Green 900 */
 ```
 
 Use Tailwind semantics: `bg-primary`, `text-primary`, `border-primary`, `ring-primary`.
@@ -64,7 +65,7 @@ Use Tailwind semantics: `bg-primary`, `text-primary`, `border-primary`, `ring-pr
 --sidebar: 217 33% 17%;           /* #1E293B — Slate 800 */
 --sidebar-foreground: 210 40% 98%; /* #F8FAFC */
 --sidebar-border: 215 25% 22%;    /* #263447 */
---sidebar-primary: 221 83% 53%;   /* #2563EB */
+--sidebar-primary: 142 76% 36%;   /* #16A34A — Green 600 */
 --sidebar-accent: 215 28% 24%;    /* hover lift */
 --sidebar-accent-foreground: 210 40% 98%;
 ```
@@ -175,8 +176,8 @@ Note: `--radius: 0.5rem` (8px) in CSS vars — used by Radix components.
 | `shadow-md` | `0 4px 6px -1px rgba(0,0,0,0.1)` | Card hover states |
 | `shadow-lg` | `0 10px 15px -3px rgba(0,0,0,0.1)` | Modals, floating panels |
 | `shadow-xl` | standard | Hero cards |
-| `shadow-primary/20` | Blue @ 20% opacity | Hero/waitlist card glow |
-| `shadow-primary/30` | Blue @ 30% opacity | Logo mark glow |
+| `shadow-primary/20` | Green @ 20% opacity | Hero/waitlist card glow |
+| `shadow-primary/30` | Green @ 30% opacity | Logo mark glow |
 
 - **Never** use `shadow-2xl` or heavy custom shadows.
 - Cards at rest: `shadow-sm`. On hover: `shadow-md`.
@@ -241,12 +242,12 @@ Nav item states:
   default  → text-slate-400, no background
   hover    → bg-white/[0.05], text-slate-100
   active   → bg-primary/[0.15], text-white, font-semibold
-             + small blue dot indicator at right (w-1.5 h-1.5 rounded-full bg-primary)
+             + small green dot indicator at right (w-1.5 h-1.5 rounded-full bg-primary)
 
 Icon states:
   default  → text-slate-500
   hover    → text-slate-300
-  active   → text-primary (blue)
+  active   → text-primary (green)
 ```
 
 - Nav items: `px-3 py-2.5 rounded-lg text-[13.5px] font-medium`
@@ -267,7 +268,7 @@ Base: `inline-flex items-center gap-2 min-h-9 px-4 py-2 text-sm font-medium roun
 | `ghost` | transparent | `text-foreground` | Inline/subtle |
 | `destructive` | `bg-destructive` | `text-white` | Irreversible delete |
 
-Zoom/video CTA: `bg-blue-600 hover:bg-blue-700 text-white` (explicit blue-600 — same as primary but written explicitly for semantic clarity in that context).
+Zoom/video CTA: `bg-green-600 hover:bg-green-700 text-white` (explicit green-600 — same as primary but written explicitly for semantic clarity in that context).
 
 ### 4.3 Cards
 
@@ -490,9 +491,9 @@ Defined in `client/src/index.css`:
 ## 12. What NOT To Do
 
 - ❌ Don't use `Outfit`, `Inter`, `Roboto`, or `system-ui` — fonts are `Plus Jakarta Sans` (display) and `DM Sans` (body).
-- ❌ Don't hardcode hex values (`#2563EB`) in component files — use `bg-primary`, `text-primary`, etc.
+- ❌ Don't hardcode hex values (`#16A34A`) in component files — use `bg-primary`, `text-primary`, etc.
 - ❌ Don't use warm/ivory backgrounds (`#FBF7F1`) — app background is cool slate (`#F8FAFC`).
-- ❌ Don't use purple as a brand color anywhere — the brand is blue.
+- ❌ Don't use purple as a brand color anywhere — the brand is green.
 - ❌ Don't apply `bg-white` or light background to the sidebar — it's always dark `bg-[#1E293B]`.
 - ❌ Don't add a left-border accent to active sidebar nav items — use background shift + right dot.
 - ❌ Don't use `font-weight: 800` or `900`.
@@ -505,3 +506,4 @@ Defined in `client/src/index.css`:
 - ❌ Don't let destructive actions execute without `AlertDialog` confirmation.
 - ❌ Don't animate `width`, `height`, or `padding`.
 - ❌ Don't use `!important` in Tailwind classes unless absolutely unavoidable.
+- ❌ Never use port 5000 for the dev server — it is reserved and will cause an `EADDRINUSE` conflict.
