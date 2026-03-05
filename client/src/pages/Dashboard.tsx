@@ -162,44 +162,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Quick Resources */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold font-display">Recommended For You</h2>
-          <div className="space-y-4">
-            <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 group cursor-pointer">
-              <div className="h-32 bg-muted relative">
-                {/* Placeholder for resource image */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
-                <img 
-                  src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800&auto=format&fit=crop" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  alt="Surgery Prep"
-                />
-                <div className="absolute bottom-3 left-3 z-20 text-white font-medium flex items-center gap-2">
-                  <div className="bg-primary/90 p-1.5 rounded-lg">
-                    <Clock className="w-3 h-3" />
-                  </div>
-                  <span>5 min read</span>
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <Badge variant="outline" className="mb-2 text-xs border-primary/20 text-primary bg-primary/5">Education</Badge>
-                <h3 className="font-bold text-base mb-1 group-hover:text-primary transition-colors">Preparing for Hip Surgery</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">Complete guide on what to expect before your procedure.</p>
-              </CardContent>
-            </Card>
-
-            <div className="bg-secondary/10 rounded-xl p-5 border border-secondary/20">
-              <h3 className="font-bold text-secondary-foreground flex items-center gap-2 mb-2">
-                <Activity className="w-4 h-4" />
-                Health Tip
-              </h3>
-              <p className="text-sm text-foreground/80 italic">
-                "Gentle stretching every morning can help maintain mobility while waiting for your procedure."
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </Layout>
   );
