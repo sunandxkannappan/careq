@@ -17,14 +17,14 @@
   --popover-foreground: 222 47% 11%;
   --popover-border: 214 32% 91%;
 
-  /* ── Brand — Green ───────────────────────────────────── */
-  --primary: 142 76% 36%;           /* #16A34A — Green 600     */
+  /* ── Brand — Blue ────────────────────────────────────── */
+  --primary: 221 83% 53%;           /* #2563EB — Blue 600      */
   --primary-foreground: 0 0% 100%;
-  --primary-border: hsl(142 71% 29%);
+  --primary-border: hsl(224 76% 48%);
 
-  --secondary: 142 72% 45%;         /* #22C55E — Green 500     */
-  --secondary-foreground: 144 61% 20%; /* #14532D — Green 900  */
-  --secondary-border: hsl(141 79% 85%); /* Green 200           */
+  --secondary: 217 91% 60%;         /* #3B82F6 — Blue 500      */
+  --secondary-foreground: 224 64% 33%; /* #1E3A8A — Blue 900   */
+  --secondary-border: hsl(213 94% 87%); /* Blue 200            */
 
   /* ── Muted / Neutral ────────────────────────────────── */
   --muted: 210 40% 96%;             /* #F1F5F9 — Slate 100     */
@@ -32,9 +32,9 @@
   --muted-border: 214 32% 91%;
 
   /* ── Accent (same as primary) ───────────────────────── */
-  --accent: 142 76% 36%;
+  --accent: 221 83% 53%;
   --accent-foreground: 0 0% 100%;
-  --accent-border: hsl(142 71% 29%);
+  --accent-border: hsl(224 76% 48%);
 
   /* ── Destructive ────────────────────────────────────── */
   --destructive: 0 84% 60%;
@@ -44,7 +44,7 @@
   /* ── Structural ─────────────────────────────────────── */
   --border: 214 32% 91%;            /* #E2E8F0 — Slate 200     */
   --input: 214 32% 91%;
-  --ring: 142 76% 36%;
+  --ring: 221 83% 53%;
 
   --radius: 0.5rem;
 
@@ -56,11 +56,11 @@
   --sidebar: 217 33% 17%;           /* #1E293B — Slate 800     */
   --sidebar-foreground: 210 40% 98%; /* #F8FAFC                */
   --sidebar-border: 215 25% 22%;    /* #263447                 */
-  --sidebar-primary: 142 76% 36%;   /* #16A34A                 */
+  --sidebar-primary: 221 83% 53%;   /* #2563EB                 */
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 215 28% 24%;    /* Hover lift               */
   --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 142 76% 36%;
+  --sidebar-ring: 221 83% 53%;
 
   /* ── Status ─────────────────────────────────────────── */
   --success: 142 76% 36%;           /* #16A34A — Green 600     */
@@ -68,8 +68,8 @@
   --info: 217 91% 60%;              /* #3B82F6 — Blue 500      */
 
   /* ── Chart ──────────────────────────────────────────── */
-  --chart-1: 142 76% 36%;
-  --chart-2: 142 76% 36%;
+  --chart-1: 221 83% 53%;
+  --chart-2: 221 83% 53%;
   --chart-3: 32 95% 44%;
   --chart-4: 280 65% 60%;
   --chart-5: 340 75% 55%;
