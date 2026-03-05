@@ -4,7 +4,7 @@ This file defines the universal design language, component rules, and coding con
 
 ---
 
-## 1. Brand Identity (CHANGE)
+## 1. Brand Identity
 
 **Product:** CareQ — a patient-facing healthcare portal for surgical waitlist management.
 **Tone:** Calm, trustworthy, clear. Never clinical or cold. Never playful or frivolous.
