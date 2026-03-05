@@ -284,7 +284,6 @@ export default function Waitlist() {
                         );
                       })}
                     </div>
-                    <p className="text-xs text-muted-foreground/70 italic mt-6 pl-1 border-t border-border/40 pt-4">CareQ does not track status after surgical consult.</p>
                   </div>
                 </div>
 
