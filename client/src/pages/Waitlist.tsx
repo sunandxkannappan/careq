@@ -33,16 +33,16 @@ export default function Waitlist() {
   if (!waitlist) return null;
 
   const stages = [
-    { id: 1, name: "Referred", date: "Jun 15, 2025", mode: "fax" as const },
-    { id: 2, name: "Registered", date: "Jul 2, 2025", mode: "virtual" as const },
-    { id: 3, name: "Initial Appointment", date: "Sep 10, 2025", mode: "in-person" as const },
-    { id: 4, name: "3 Month Appointment", date: "Dec 15, 2025", mode: "virtual" as const },
-    { id: 5, name: "6 Month Appointment", date: "Ready to book", mode: "virtual" as const },
-    { id: 6, name: "9 Month Appointment", date: "Pending", mode: "virtual" as const },
-    { id: 7, name: "12 Month Appointment", date: "Pending", mode: "virtual" as const },
-    { id: 8, name: "15 Month Appointment", date: "Pending", mode: "virtual" as const },
-    { id: 9, name: "Surgical Consult", date: "18 Months", mode: "in-person" as const },
-    { id: 10, name: "Surgery", date: "21 Months", mode: "in-person" as const },
+    { id: 1, name: "Referred", date: "Jun 2025", mode: "fax" as const },
+    { id: 2, name: "Registered", date: "Jul 2025", mode: "virtual" as const },
+    { id: 3, name: "Initial Appointment", date: "Sep 2025", mode: "in-person" as const },
+    { id: 4, name: "3 Month Appointment", date: "Dec 2025", mode: "virtual" as const },
+    { id: 5, name: "6 Month Appointment", date: "Mar 2026", mode: "virtual" as const },
+    { id: 6, name: "9 Month Appointment", date: "Jun 2026", mode: "virtual" as const },
+    { id: 7, name: "12 Month Appointment", date: "Sep 2026", mode: "virtual" as const },
+    { id: 8, name: "15 Month Appointment", date: "Dec 2026", mode: "virtual" as const },
+    { id: 9, name: "Surgical Consult", date: "Dec 2026", mode: "in-person" as const },
+    { id: 10, name: "Surgery", date: "Mar 2027", mode: "in-person" as const },
   ];
 
   const currentStage = 5; // Set to 6 Month Visit (Ready to book) to show grayed out logic
@@ -80,14 +80,10 @@ export default function Waitlist() {
           <CardContent className="px-6 pb-6 pt-6 space-y-8">
               {/* Wait Times Row */}
               <div>
-                <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2 mb-4">
-                  <Clock className="w-4 h-4 text-primary" />
-                  Wait Time
-                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="bg-muted/30 p-5 rounded-xl border border-border/50 text-center flex flex-col justify-center">
                     <div className="flex items-center justify-center gap-1.5 mb-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Current wait list status</p>
                       <Popover>
                         <PopoverTrigger asChild>
                           <button className="text-muted-foreground/60 hover:text-primary transition-colors">
@@ -95,7 +91,7 @@ export default function Waitlist() {
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-80 text-xs space-y-2">
-                          <p className="font-semibold text-sm text-foreground">Current Status Info</p>
+                          <p className="font-semibold text-sm text-foreground">What does this mean?</p>
                           <p>Your current status is determined by your most recent clinical assessment and placement on the provincial waitlist.</p>
                         </PopoverContent>
                       </Popover>
@@ -107,7 +103,7 @@ export default function Waitlist() {
 
                   <div className="bg-muted/30 p-5 rounded-xl border border-border/50 text-center flex flex-col justify-center">
                     <div className="flex items-center justify-center gap-1.5 mb-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Wait Time to See Surgeon</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Wait time to surgical consult</p>
                       <Popover>
                         <PopoverTrigger asChild>
                           <button className="text-muted-foreground/60 hover:text-primary transition-colors" data-testid="button-info-surgeon">
@@ -115,7 +111,7 @@ export default function Waitlist() {
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-80 text-xs space-y-2">
-                          <p className="font-semibold text-sm text-foreground">How is this calculated?</p>
+                          <p className="font-semibold text-sm text-foreground">What does this mean?</p>
                           <p>This estimate is based on the average time patients in your region wait from referral to their first surgical consultation.</p>
                         </PopoverContent>
                       </Popover>
@@ -128,7 +124,7 @@ export default function Waitlist() {
 
                   <div className="bg-muted/30 p-5 rounded-xl border border-border/50 text-center flex flex-col justify-center">
                     <div className="flex items-center justify-center gap-1.5 mb-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Wait Time to Get Surgery</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Wait time to surgery</p>
                       <Popover>
                         <PopoverTrigger asChild>
                           <button className="text-muted-foreground/60 hover:text-primary transition-colors" data-testid="button-info-surgery">
@@ -136,7 +132,7 @@ export default function Waitlist() {
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-80 text-xs space-y-2">
-                          <p className="font-semibold text-sm text-foreground">How is this calculated?</p>
+                          <p className="font-semibold text-sm text-foreground">What does this mean?</p>
                           <p>This estimate covers the full timeline from referral to your surgery date.</p>
                         </PopoverContent>
                       </Popover>
