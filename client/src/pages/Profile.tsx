@@ -4,13 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useForm, Controller } from "react-hook-form";
 import { useEffect, useState } from "react";
-import { User as UserType } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { User, Phone, Mail, MapPin, Heart, Bell, Check } from "lucide-react";
+import { User, Mail, Heart, Bell, Check } from "lucide-react";
 
 type ProfileForm = {
   firstName: string;

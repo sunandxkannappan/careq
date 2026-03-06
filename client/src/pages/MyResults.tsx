@@ -106,10 +106,7 @@ export default function MyResults() {
 
   const labs = results?.filter((r) => r.category === "Labs") || [];
   const imaging = results?.filter((r) => r.category === "Imaging") || [];
-  const eAdvice = results?.filter((r) => r.category === "E-Advice") || [];
-
   const pendingCount = results?.filter((r) => r.status === "Pending").length || 0;
-  const availableCount = results?.filter((r) => r.status === "Available").length || 0;
 
   return (
     <Layout>

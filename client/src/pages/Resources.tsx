@@ -7,17 +7,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Phone, Clock, AlertTriangle, FileText, PlayCircle, Download, ExternalLink, HelpCircle, Dumbbell, BookOpen, Contact, Search, MessageSquareText } from "lucide-react";
-import { useState } from "react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { Resource } from "@shared/schema";
 
 export default function Resources() {
   const { data: resources, isLoading: resourcesLoading } = useResources();
   const { data: faqs, isLoading: faqsLoading } = useFaqs();
   const { data: results, isLoading: resultsLoading } = useMyResults();
-  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
-
   if (resourcesLoading || faqsLoading || resultsLoading) return <Layout><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mt-20" /></Layout>;
 
   const eAdvice = results?.filter((r) => r.category === "E-Advice") || [];
@@ -92,7 +88,7 @@ export default function Resources() {
       <CardFooter className="p-4 pt-0 gap-2">
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="outline" className="flex-1 text-xs" onClick={() => setSelectedResource(resource)}>
+            <Button variant="outline" className="flex-1 text-xs">
               <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> View
             </Button>
           </DialogTrigger>

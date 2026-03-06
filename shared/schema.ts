@@ -99,13 +99,6 @@ export const faqs = pgTable("faqs", {
 
 // Zod Schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
-export const insertAppointmentSchema = createInsertSchema(appointments).omit({ id: true });
-export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true });
-export const insertWaitlistStatusSchema = createInsertSchema(waitlistStatus).omit({ id: true });
-export const insertMedicalResultSchema = createInsertSchema(medicalResults).omit({ id: true });
-export const insertResourceSchema = createInsertSchema(resources).omit({ id: true });
-export const insertDocumentSchema = createInsertSchema(documents).omit({ id: true });
-export const insertFaqSchema = createInsertSchema(faqs).omit({ id: true });
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;

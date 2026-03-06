@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { useWaitlist } from "@/hooks/use-data";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,11 +8,6 @@ import {
   Activity,
   CalendarDays,
   Hourglass,
-  ChevronDown,
-  ChevronUp,
-  CalendarCheck,
-  CalendarClock,
-  CircleCheckBig,
   Info,
   Video,
   MapPin,
@@ -21,7 +15,6 @@ import {
   Dumbbell,
   Stethoscope,
   ClipboardCheck,
-  FileText,
   Download,
   Microscope,
   Heart,
@@ -31,8 +24,6 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 
 export default function Waitlist() {
   const { data: waitlist, isLoading } = useWaitlist();
-  const [expanded, setExpanded] = useState(true);
-
   if (isLoading) return <Layout><div className="animate-pulse h-64 bg-muted rounded-xl" /></Layout>;
   if (!waitlist) return null;
 
@@ -50,16 +41,6 @@ export default function Waitlist() {
   ];
 
   const currentStage = 5; // Set to 6 Month Visit (Ready to book) to show grayed out logic
-
-  const getBookingStatus = (stageId: number): "ready" | "booked" | "completed" | null => {
-    if (stageId < currentStage) return "completed";
-    if (stageId === currentStage) return "ready";
-    return null;
-  };
-
-  const getBookingBadge = (status: "ready" | "booked" | "completed" | null) => {
-    return null;
-  };
 
   return (
     <Layout>
@@ -266,8 +247,6 @@ export default function Waitlist() {
                       {stages.map((stage) => {
                         const isCompleted = stage.id < currentStage;
                         const isCurrent = stage.id === currentStage;
-                        const isFuture = stage.id > currentStage;
-
                         return (
                           <div key={stage.id} className="relative flex items-start gap-4" data-testid={`journey-stage-${stage.id}`}>
                             <div className={cn(
@@ -301,7 +280,6 @@ export default function Waitlist() {
                                    "In Person"}
                                 </span>
                               )}
-                              {getBookingBadge(getBookingStatus(stage.id))}
                             </div>
                           </div>
                         );

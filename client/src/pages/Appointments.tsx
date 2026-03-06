@@ -1,21 +1,18 @@
 import { Layout } from "@/components/Layout";
-import { useAppointments, useCreateAppointment, useUpdateAppointment, useTasks } from "@/hooks/use-data";
+import { useAppointments, useCreateAppointment } from "@/hooks/use-data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calendar, MapPin, Video, Phone, Clock, Video as VideoIcon, Download, ChevronRight, ChevronDown, AlertCircle, CheckCircle2, Circle, Hourglass } from "lucide-react";
+import { Calendar, MapPin, Phone, Clock, Video as VideoIcon, ChevronDown, CheckCircle2 } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { useState } from "react";
-import { Appointment } from "@shared/schema";
-import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 
 const carePlanByAppointment: Record<number, { assessment: string; carePlan: string[] }> = {
@@ -54,13 +51,10 @@ const futureStages = [
 
 export default function Appointments() {
   const { data: appointments, isLoading } = useAppointments();
-  const { data: tasks } = useTasks();
   const createMutation = useCreateAppointment();
-  const updateMutation = useUpdateAppointment();
-  
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [rescheduleId, setRescheduleId] = useState<number | null>(null);
-  
+
   const [formData, setFormData] = useState({
     reason: "",
     date: "",
@@ -68,31 +62,13 @@ export default function Appointments() {
     type: "In-Person"
   });
 
-  const [rescheduleData, setRescheduleData] = useState({
-    date: "",
-    time: ""
-  });
-
-  const [rescheduleCount, setRescheduleCount] = useState(() => {
-    const stored = localStorage.getItem("careq_reschedule_count");
-    return stored ? parseInt(stored, 10) : 1;
-  });
-
-  const allUpcoming = appointments?.filter(a => !isPast(new Date(a.date)) && a.status !== 'Cancelled') || [];
   const past = appointments?.filter(a => isPast(new Date(a.date)) || a.status === 'Completed') || [];
-
-  const sortedUpcoming = [...allUpcoming].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  
-  const primaryAppointment = sortedUpcoming.length > 0 ? sortedUpcoming[0] : null;
-
-  const pendingTasks = tasks?.filter(t => t.status === "Pending") || [];
-  const hasPendingTasks = pendingTasks.length > 0;
 
   const handleCreate = () => {
     if (!formData.reason || !formData.date || !formData.time) return;
-    
+
     const dateTime = new Date(`${formData.date}T${formData.time}`);
-    
+
     createMutation.mutate({
       title: formData.reason,
       doctorName: "Dr. Emily Chen",
@@ -106,41 +82,6 @@ export default function Appointments() {
         setIsCreateOpen(false);
         setFormData({ reason: "", date: "", time: "", type: "In-Person" });
       }
-    });
-  };
-
-  const openReschedule = (appt: Appointment) => {
-    const d = new Date(appt.date);
-    setRescheduleId(appt.id);
-    setRescheduleData({
-      date: format(d, "yyyy-MM-dd"),
-      time: format(d, "HH:mm")
-    });
-  };
-
-  const handleReschedule = () => {
-    if (!rescheduleId || !rescheduleData.date || !rescheduleData.time) return;
-    
-    const dateTime = new Date(`${rescheduleData.date}T${rescheduleData.time}`);
-    
-    updateMutation.mutate({
-      id: rescheduleId,
-      date: dateTime,
-      status: 'Scheduled'
-    }, {
-      onSuccess: () => {
-        const newCount = rescheduleCount + 1;
-        setRescheduleCount(newCount);
-        localStorage.setItem("careq_reschedule_count", String(newCount));
-        setRescheduleId(null);
-      }
-    });
-  };
-
-  const handleCancel = (id: number) => {
-    updateMutation.mutate({
-      id,
-      status: 'Cancelled'
     });
   };
 

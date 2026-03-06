@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { db } from "../lib/mockData";
-import { User, Appointment, Task } from "@shared/schema";
+import { User, Appointment } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 // Simulate network delay
@@ -139,32 +139,12 @@ export function useUpdateTask() {
   });
 }
 
-export function useResults() {
-  return useQuery({
-    queryKey: ['results'],
-    queryFn: async () => {
-      await delay(600);
-      return db.get().results;
-    }
-  });
-}
-
 export function useResources() {
   return useQuery({
     queryKey: ['resources'],
     queryFn: async () => {
       await delay(500);
       return db.get().resources;
-    }
-  });
-}
-
-export function useDocuments() {
-  return useQuery({
-    queryKey: ['documents'],
-    queryFn: async () => {
-      await delay(400);
-      return db.get().documents;
     }
   });
 }
