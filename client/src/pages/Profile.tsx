@@ -5,10 +5,56 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm, Controller } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Heart, Bell, Check } from "lucide-react";
+import { User, Mail, Heart, Bell, Check, Stethoscope } from "lucide-react";
+
+const PROVINCES = [
+  { value: "AB", label: "Alberta" },
+  { value: "BC", label: "British Columbia" },
+  { value: "MB", label: "Manitoba" },
+  { value: "NB", label: "New Brunswick" },
+  { value: "NL", label: "Newfoundland and Labrador" },
+  { value: "NS", label: "Nova Scotia" },
+  { value: "NT", label: "Northwest Territories" },
+  { value: "NU", label: "Nunavut" },
+  { value: "ON", label: "Ontario" },
+  { value: "PE", label: "Prince Edward Island" },
+  { value: "QC", label: "Quebec" },
+  { value: "SK", label: "Saskatchewan" },
+  { value: "YT", label: "Yukon" },
+];
+
+const GENDER_OPTIONS = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "other", label: "Other" },
+  { value: "unknown", label: "Unknown" },
+];
+
+const MARITAL_STATUS_OPTIONS = [
+  { value: "Single", label: "Single" },
+  { value: "Married", label: "Married" },
+  { value: "Divorced", label: "Divorced" },
+  { value: "Widowed", label: "Widowed" },
+  { value: "Separated", label: "Separated" },
+  { value: "Unknown", label: "Unknown" },
+];
+
+const RELATIONSHIP_OPTIONS = [
+  { value: "Spouse", label: "Spouse" },
+  { value: "Parent", label: "Parent" },
+  { value: "Child", label: "Child" },
+  { value: "Sibling", label: "Sibling" },
+  { value: "Friend", label: "Friend" },
+  { value: "Guardian", label: "Guardian" },
+  { value: "Caregiver", label: "Caregiver" },
+  { value: "Other", label: "Other" },
+];
+
+const POSTAL_CODE_REGEX = /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/;
 
 type ProfileForm = {
   firstName: string;
@@ -16,12 +62,18 @@ type ProfileForm = {
   email: string;
   phone: string;
   dob: string;
+  gender: string;
+  maritalStatus: string;
   address: string;
   city: string;
+  province: string;
   postalCode: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
   emergencyContactRelation: string;
+  emergencyContactGender: string;
+  referringPhysicianName: string;
+  referringPhysicianPhone: string;
   emailNotifications: boolean;
   smsNotifications: boolean;
   appointmentReminders: boolean;
@@ -47,12 +99,18 @@ export default function Profile() {
       email: "",
       phone: "",
       dob: "",
+      gender: "",
+      maritalStatus: "",
       address: "",
       city: "",
+      province: "AB",
       postalCode: "",
       emergencyContactName: "",
       emergencyContactPhone: "",
       emergencyContactRelation: "",
+      emergencyContactGender: "",
+      referringPhysicianName: "",
+      referringPhysicianPhone: "",
       emailNotifications: true,
       smsNotifications: false,
       appointmentReminders: true,
@@ -68,12 +126,18 @@ export default function Profile() {
         email: user.email || "",
         phone: user.phone || "",
         dob: user.dob || "",
+        gender: user.gender || "",
+        maritalStatus: user.maritalStatus || "",
         address: user.address || "",
         city: user.city || "",
+        province: user.province || "AB",
         postalCode: user.postalCode || "",
         emergencyContactName: user.emergencyContactName || "",
         emergencyContactPhone: user.emergencyContactPhone || "",
         emergencyContactRelation: user.emergencyContactRelation || "",
+        emergencyContactGender: user.emergencyContactGender || "",
+        referringPhysicianName: user.referringPhysicianName || "",
+        referringPhysicianPhone: user.referringPhysicianPhone || "",
         emailNotifications: user.emailNotifications ?? true,
         smsNotifications: user.smsNotifications ?? false,
         appointmentReminders: user.appointmentReminders ?? true,
@@ -83,7 +147,11 @@ export default function Profile() {
   }, [user, reset]);
 
   const onSubmit = (data: ProfileForm) => {
-    updateMutation.mutate(data, {
+    const postalCode = data.postalCode
+      ? data.postalCode.toUpperCase().replace(/\s/g, "").replace(/^(.{3})(.{3})$/, "$1 $2")
+      : "";
+
+    updateMutation.mutate({ ...data, postalCode }, {
       onSuccess: () => {
         setSaved(true);
         toast({
@@ -153,6 +221,47 @@ export default function Profile() {
                   <Input id="dob" type="date" data-testid="input-dob" {...register("dob")} />
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="gender">Gender</Label>
+                    <Controller
+                      name="gender"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger id="gender" data-testid="select-gender">
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {GENDER_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maritalStatus">Marital Status</Label>
+                    <Controller
+                      name="maritalStatus"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger id="maritalStatus" data-testid="select-marital-status">
+                            <SelectValue placeholder="Select marital status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MARITAL_STATUS_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="phn">PHN (Provincial Health Number)</Label>
                   <Input id="phn" data-testid="input-phn" value="9876 543 210" readOnly className="bg-muted/30" />
@@ -202,15 +311,71 @@ export default function Profile() {
                   <Input id="address" data-testid="input-address" {...register("address")} />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="city">City</Label>
                     <Input id="city" data-testid="input-city" {...register("city")} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="postalCode">Zip / Postal Code</Label>
-                    <Input id="postalCode" data-testid="input-postal-code" {...register("postalCode")} />
+                    <Label htmlFor="province">Province</Label>
+                    <Controller
+                      name="province"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger id="province" data-testid="select-province">
+                            <SelectValue placeholder="Select province" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PROVINCES.map((p) => (
+                              <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="postalCode">Postal Code</Label>
+                    <Input
+                      id="postalCode"
+                      data-testid="input-postal-code"
+                      placeholder="A1A 1A1"
+                      {...register("postalCode", {
+                        validate: (value) => {
+                          if (!value) return true;
+                          const normalized = value.toUpperCase().replace(/\s/g, "");
+                          return POSTAL_CODE_REGEX.test(normalized) || "Must match Canadian format (e.g. T2P 1J9)";
+                        },
+                      })}
+                      className={errors.postalCode ? "border-destructive focus-visible:ring-destructive" : ""}
+                    />
+                    {errors.postalCode && <p className="text-xs text-destructive" data-testid="error-postal-code">{errors.postalCode.message}</p>}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-3 flex-wrap">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Stethoscope className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Referring Physician</CardTitle>
+                <CardDescription>Your referring or family doctor.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="referringPhysicianName">Physician Name</Label>
+                  <Input id="referringPhysicianName" data-testid="input-referring-physician-name" {...register("referringPhysicianName")} placeholder="Dr. Jane Smith" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="referringPhysicianPhone">Phone (optional)</Label>
+                  <Input id="referringPhysicianPhone" data-testid="input-referring-physician-phone" {...register("referringPhysicianPhone")} placeholder="(555) 000-0000" />
                 </div>
               </div>
             </CardContent>
@@ -235,12 +400,48 @@ export default function Profile() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="emergencyContactRelation">Relationship</Label>
-                    <Input id="emergencyContactRelation" data-testid="input-emergency-relation" {...register("emergencyContactRelation")} placeholder="e.g., Spouse, Parent" />
+                    <Controller
+                      name="emergencyContactRelation"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger id="emergencyContactRelation" data-testid="select-emergency-relation">
+                            <SelectValue placeholder="Select relationship" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {RELATIONSHIP_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
                 </div>
-                <div className="space-y-2 max-w-sm">
-                  <Label htmlFor="emergencyContactPhone">Contact Phone</Label>
-                  <Input id="emergencyContactPhone" data-testid="input-emergency-phone" {...register("emergencyContactPhone")} placeholder="(555) 000-0000" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="emergencyContactPhone">Contact Phone</Label>
+                    <Input id="emergencyContactPhone" data-testid="input-emergency-phone" {...register("emergencyContactPhone")} placeholder="(555) 000-0000" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="emergencyContactGender">Contact Gender</Label>
+                    <Controller
+                      name="emergencyContactGender"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger id="emergencyContactGender" data-testid="select-emergency-gender">
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {GENDER_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
