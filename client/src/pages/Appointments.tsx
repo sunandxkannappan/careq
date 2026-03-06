@@ -31,12 +31,6 @@ const carePlanByAppointment: Record<number, { assessment: string; carePlan: stri
   },
 };
 
-const futureStages = [
-  { name: "9 Month Appointment", date: "Jun 2026", status: "Planned" },
-  { name: "12 Month Appointment", date: "Sep 2026", status: "Planned" },
-  { name: "15 Month Appointment", date: "Dec 2026", status: "Planned" },
-];
-
 const appointmentTracking = {
   lateCancellations: 1,
   missedAppointments: 0,
@@ -44,12 +38,18 @@ const appointmentTracking = {
 
 // 6-Month appointment statuses to display
 const sixMonthStatuses = [
-  { status: "To book", type: "Video Call", date: "Jun 2026", time: "TBD", lateCancelDate: "Jun 15", missedDate: null },
-  { status: "Booked", type: "Phone Call", date: "Jun 2026", time: "9:00 AM", lateCancelDate: "Jun 15", missedDate: null },
-  { status: "To confirm", type: "Video Call", date: "Jun 2026", time: "10:00 AM", lateCancelDate: null, missedDate: null },
+  { status: "To book", type: "Zoom Call", date: "Jun 2026", time: "TBD", lateCancelDate: "June 15, 2026", missedDate: "June 10, 2026" },
+  { status: "Booked", type: "Phone Call", date: "Jun 2026", time: "9:00 AM", lateCancelDate: null, missedDate: null },
+  { status: "To confirm", type: "Zoom Call", date: "Jun 2026", time: "10:00 AM", lateCancelDate: null, missedDate: null },
   { status: "Confirmed", type: "Phone Call", date: "Jun 2026", time: "11:00 AM", lateCancelDate: null, missedDate: null },
-  { status: "Ready", type: "Video Call", date: "Jun 2026", time: "9:00 AM", lateCancelDate: null, missedDate: null },
+  { status: "Ready", type: "Zoom Call", date: "Jun 2026", time: "9:00 AM", lateCancelDate: null, missedDate: null },
   { status: "Ready", type: "Phone Call", date: "Jun 2026", time: "9:00 AM", lateCancelDate: null, missedDate: null },
+];
+
+const futureStages = [
+  { name: "9 Month Appointment", date: "Sep 2026", status: "Planned" },
+  { name: "12 Month Appointment", date: "Dec 2026", status: "Planned" },
+  { name: "15 Month Appointment", date: "Mar 2027", status: "Planned" },
 ];
 
 export default function Appointments() {
@@ -235,370 +235,173 @@ export default function Appointments() {
           </TabsList>
 
           <TabsContent value="future" className="space-y-6 animate-in fade-in-50 duration-300">
-            
-            {sortedUpcoming.length > 0 ? (
-              <div className="space-y-6">
-                {sortedUpcoming.map((appt, index) => {
-                  const dateDisplay = format(new Date(appt.date), "MMM yyyy");
-                  const statusDisplay = appt.status === 'Pending' ? 'Pending Booking' : 'Booked';
+            <div className="space-y-6">
+              {/* 6-Month Appointment Status Variations */}
+              {sixMonthStatuses.map((item, idx) => (
+                <Card key={idx} className="border-none shadow-md bg-white rounded-xl overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="bg-muted/30 px-6 py-3 border-b border-border/40 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground">6 Month Appointment</h3>
+                        <p className="text-[10px] text-muted-foreground mt-1">{item.date}</p>
+                      </div>
+                      <Badge variant="outline" className={cn(
+                        "text-[10px] h-5 border-none shrink-0 font-bold uppercase tracking-wider",
+                        item.status === 'Ready' ? "bg-emerald-100 text-emerald-700" :
+                        "bg-muted/50 text-muted-foreground"
+                      )}>
+                        {item.status}
+                      </Badge>
+                    </div>
 
-                  return (
-                  <Card key={appt.id} className="border-none shadow-md bg-white rounded-xl overflow-hidden" data-testid={`card-appointment-${appt.id}`}>
-                    <CardContent className="p-0">
-
-                      <div className="bg-muted/30 px-6 py-3 border-b border-border/40 flex items-center justify-between">
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                      {/* Left Side - Care Team & Details */}
+                      <div className="md:col-span-2 space-y-4">
                         <div>
-                          <h3 className="text-sm font-bold text-foreground">{appt.title}</h3>
-                          <p className="text-[10px] text-muted-foreground mt-1">{dateDisplay}</p>
-                        </div>
-                        <Badge variant="secondary" className={cn(
-                          "border-none px-2 py-0 h-5 text-[10px] font-bold uppercase tracking-wider shrink-0",
-                          statusDisplay === 'Pending Booking' ? "bg-amber-100 text-amber-700" : "bg-primary/10 text-primary"
-                        )}>
-                          {statusDisplay}
-                        </Badge>
-                      </div>
-
-                      <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="md:col-span-2 space-y-6">
-                          
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">Care Team</h3>
-                            <div className="flex gap-4">
-                              <div className="flex items-center gap-3">
-                                <Avatar className="w-12 h-12 rounded-lg border border-border">
-                                  <AvatarImage src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=100&h=100" />
-                                  <AvatarFallback className="rounded-lg">Dr</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-semibold text-foreground text-sm">Dr. Munib Ali</p>
-                                  <p className="text-xs text-muted-foreground">Physician</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="w-12 h-12 rounded-lg border border-border">
-                                  <AvatarImage src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100&h=100" />
-                                  <AvatarFallback className="rounded-lg">RN</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-semibold text-foreground text-sm">Sarah Jenkins</p>
-                                  <p className="text-xs text-muted-foreground">Nurse</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3">
-                             <div className="flex items-center gap-3 text-foreground">
-                                <div className="w-8 flex justify-center">
-                                  <Calendar className="w-5 h-5 text-primary" />
-                                </div>
-                                <span className="font-medium">
-                                  {format(new Date(appt.date), "MMMM do, yyyy")}
-                                </span>
-                             </div>
-                             <div className="flex items-center gap-3 text-foreground">
-                                <div className="w-8 flex justify-center">
-                                  <Clock className="w-5 h-5 text-primary" />
-                                </div>
-                                <span className="font-medium">
-                                  {format(new Date(appt.date), "h:mm a")}
-                                </span>
-                             </div>
-                             <div className="flex items-center gap-3 text-foreground">
-                                <div className="w-8 flex justify-center">
-                                  {appt.type === 'Video Call' ? <VideoIcon className="w-5 h-5 text-primary" /> : appt.type === 'Phone' ? <Phone className="w-5 h-5 text-primary" /> : <MapPin className="w-5 h-5 text-primary" />}
-                                </div>
-                                <span className="font-medium">
-                                  {appt.location} 
-                                  {appt.type === 'Video Call' && " (Zoom)"}
-                                </span>
-                             </div>
-                          </div>
-
-                          {(rescheduleCount > 0 || appointmentTracking.lateCancellations > 0 || appointmentTracking.missedAppointments > 0) && (
-                            <div className="flex gap-2 pt-2">
-                              {appointmentTracking.lateCancellations > 0 && (
-                                <Badge className="text-[10px] bg-yellow-100 text-yellow-800 border-none">
-                                  {appointmentTracking.lateCancellations} Late Cancel
-                                </Badge>
-                              )}
-                              {appointmentTracking.missedAppointments > 0 && (
-                                <Badge className="text-[10px] bg-red-100 text-red-800 border-none">
-                                  {appointmentTracking.missedAppointments} Missed
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-
-                        </div>
-
-                        <div className="flex flex-col gap-3 justify-center border-t md:border-t-0 md:border-l border-border/50 pt-6 md:pt-0 md:pl-8">
-                          
-                          {appt.type === 'Video Call' && (
-                            <Button 
-                              onClick={() => window.open('https://zoom.us/meeting/schedule', '_blank')}
-                              className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                              data-testid="button-join-zoom"
-                            >
-                              <VideoIcon className="w-4 h-4 mr-2" /> Join Zoom Call
-                            </Button>
-                          )}
-
-                          <Dialog open={rescheduleId === appt.id} onOpenChange={(open) => !open && setRescheduleId(null)}>
-                            <DialogTrigger asChild>
-                              <Button variant="default" className="w-full bg-primary hover:bg-primary/90 text-white" onClick={() => openReschedule(appt)} data-testid="button-reschedule">
-                                Reschedule
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Reschedule Appointment</DialogTitle>
-                                <DialogDescription>
-                                  Choose a new date and time for your appointment.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <Label>New Date</Label>
-                                    <Input 
-                                      type="date" 
-                                      value={rescheduleData.date}
-                                      onChange={e => setRescheduleData({...rescheduleData, date: e.target.value})}
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label>New Time</Label>
-                                    <Input 
-                                      type="time" 
-                                      value={rescheduleData.time}
-                                      onChange={e => setRescheduleData({...rescheduleData, time: e.target.value})}
-                                    />
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Care Team</h4>
+                          <div className="flex gap-4">
+                            {item.status === 'To book' ? (
+                              <>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-12 h-12 rounded-lg bg-muted"></div>
+                                  <div>
+                                    <p className="font-semibold text-foreground text-sm">TBD</p>
+                                    <p className="text-xs text-muted-foreground">Physician</p>
                                   </div>
                                 </div>
-                              </div>
-                              <DialogFooter>
-                                <Button onClick={handleReschedule} disabled={updateMutation.isPending}>
-                                  Save Changes
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline" className="w-full border-primary/20 text-foreground hover:bg-destructive/5 hover:text-destructive hover:border-destructive/30" data-testid="button-cancel-appointment">
-                                Cancel
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Cancel Appointment?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to cancel your appointment? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Keep Appointment</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleCancel(appt.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                  Yes, Cancel
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-12 h-12 rounded-lg bg-muted"></div>
+                                  <div>
+                                    <p className="font-semibold text-foreground text-sm">TBD</p>
+                                    <p className="text-xs text-muted-foreground">Nurse</p>
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="w-12 h-12 rounded-lg border border-border">
+                                    <AvatarImage src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=100&h=100" />
+                                    <AvatarFallback className="rounded-lg">Dr</AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="font-semibold text-foreground text-sm">Dr. Munib Ali</p>
+                                    <p className="text-xs text-muted-foreground">Physician</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="w-12 h-12 rounded-lg border border-border">
+                                    <AvatarImage src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100&h=100" />
+                                    <AvatarFallback className="rounded-lg">RN</AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="font-semibold text-foreground text-sm">Sarah Jenkins</p>
+                                    <p className="text-xs text-muted-foreground">Nurse</p>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
+
+                        {item.status !== 'To book' && (
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-center gap-3 text-foreground">
+                              <Calendar className="w-4 h-4 text-primary" />
+                              <span>{item.date}</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-foreground">
+                              <Clock className="w-4 h-4 text-primary" />
+                              <span>{item.time}</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-foreground">
+                              {item.type === 'Zoom Call' ? <VideoIcon className="w-4 h-4 text-primary" /> : <Phone className="w-4 h-4 text-primary" />}
+                              <span>{item.type}</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
+
+                      {/* Right Side - Actions & Tracking */}
+                      <div className="flex flex-col gap-3 border-t md:border-t-0 md:border-l border-border/50 pt-6 md:pt-0 md:pl-8">
+                        {item.status === 'To book' && (
+                          <>
+                            <Button className="w-full bg-primary text-white">Book Appointment</Button>
+                            {(item.lateCancelDate || item.missedDate) && (
+                              <div className="mt-2 space-y-1">
+                                {item.lateCancelDate && (
+                                  <Badge className="text-[10px] bg-yellow-100 text-yellow-800 w-full justify-start">
+                                    Late Cancellation · {item.lateCancelDate}
+                                  </Badge>
+                                )}
+                                {item.missedDate && (
+                                  <Badge className="text-[10px] bg-red-100 text-red-800 w-full justify-start">
+                                    Missed Appointment · {item.missedDate}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
+                        {item.status === 'Booked' && (
+                          <>
+                            {item.type === 'Zoom Call' ? (
+                              <Button variant="outline" className="w-full">Switch to Phone</Button>
+                            ) : (
+                              <Button variant="outline" className="w-full">Switch to Zoom</Button>
+                            )}
+                            <Button variant="outline" className="w-full">Reschedule</Button>
+                            <Button variant="outline" className="w-full">Cancel</Button>
+                          </>
+                        )}
+                        {item.status === 'To confirm' && (
+                          <>
+                            <Button className="w-full bg-primary text-white">Confirm</Button>
+                            <Button variant="outline" className="w-full">Reschedule</Button>
+                            <Button variant="outline" className="w-full">Cancel</Button>
+                          </>
+                        )}
+                        {item.status === 'Confirmed' && (
+                          <>
+                            <Button variant="outline" className="w-full">Reschedule</Button>
+                            <Button variant="outline" className="w-full">Cancel</Button>
+                          </>
+                        )}
+                        {item.status === 'Ready' && item.type === 'Zoom Call' && (
+                          <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                            <VideoIcon className="w-4 h-4 mr-2" /> Join Now
+                          </Button>
+                        )}
+                        {item.status === 'Ready' && item.type === 'Phone Call' && (
+                          <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
+                            <p className="text-[10px] font-semibold text-muted-foreground mb-2">INCOMING CALL</p>
+                            <p className="text-sm font-medium text-foreground">You can expect a phone call to (604) 555-0142</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">between 9:00 AM - 9:15 AM</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {/* Future Stages - Planned Appointments */}
+              <div className="space-y-3 mt-8">
+                {futureStages.map((stage, index) => (
+                  <Card key={index} className="border border-border/60 shadow-sm bg-white/80 rounded-xl">
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-foreground text-sm">{stage.name}</h3>
+                        <p className="text-[10px] text-muted-foreground mt-1">{stage.date}</p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] h-5 bg-muted/50 text-muted-foreground border-border shrink-0 font-bold uppercase tracking-wider">
+                        {stage.status}
+                      </Badge>
                     </CardContent>
                   </Card>
-                  );
-                })}
-
-                {primaryAppointment && (
-                  <div className="space-y-6 mt-8">
-                    {sixMonthStatuses.map((item, idx) => (
-                      <Card key={idx} className="border-none shadow-md bg-white rounded-xl overflow-hidden">
-                        <CardContent className="p-0">
-                          <div className="bg-muted/30 px-6 py-3 border-b border-border/40 flex items-center justify-between">
-                            <div>
-                              <h3 className="text-sm font-bold text-foreground">6 Month Appointment</h3>
-                              <p className="text-[10px] text-muted-foreground mt-1">{item.date}</p>
-                            </div>
-                            <Badge variant="outline" className={cn(
-                              "text-[10px] h-5 border-none shrink-0",
-                              item.status === 'To book' ? "bg-muted/50 text-muted-foreground" :
-                              item.status === 'Ready' ? "bg-emerald-100 text-emerald-700" :
-                              "bg-muted/50 text-muted-foreground"
-                            )}>
-                              {item.status}
-                            </Badge>
-                          </div>
-
-                          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {/* Left Side - Care Team & Details */}
-                            <div className="md:col-span-2 space-y-4">
-                              <div>
-                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Care Team</h4>
-                                <div className="flex gap-4">
-                                  {item.status === 'To book' ? (
-                                    <>
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-lg bg-muted"></div>
-                                        <div>
-                                          <p className="font-semibold text-foreground text-sm">TBD</p>
-                                          <p className="text-xs text-muted-foreground">Physician</p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-lg bg-muted"></div>
-                                        <div>
-                                          <p className="font-semibold text-foreground text-sm">TBD</p>
-                                          <p className="text-xs text-muted-foreground">Nurse</p>
-                                        </div>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <div className="flex items-center gap-3">
-                                        <Avatar className="w-12 h-12 rounded-lg border border-border">
-                                          <AvatarImage src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=100&h=100" />
-                                          <AvatarFallback className="rounded-lg">Dr</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                          <p className="font-semibold text-foreground text-sm">Dr. Munib Ali</p>
-                                          <p className="text-xs text-muted-foreground">Physician</p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center gap-3">
-                                        <Avatar className="w-12 h-12 rounded-lg border border-border">
-                                          <AvatarImage src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100&h=100" />
-                                          <AvatarFallback className="rounded-lg">RN</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                          <p className="font-semibold text-foreground text-sm">Sarah Jenkins</p>
-                                          <p className="text-xs text-muted-foreground">Nurse</p>
-                                        </div>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-
-                              {item.status !== 'To book' && (
-                                <div className="space-y-2 text-sm">
-                                  <div className="flex items-center gap-3 text-foreground">
-                                    <Calendar className="w-4 h-4 text-primary" />
-                                    <span>{item.date}</span>
-                                  </div>
-                                  <div className="flex items-center gap-3 text-foreground">
-                                    <Clock className="w-4 h-4 text-primary" />
-                                    <span>{item.time}</span>
-                                  </div>
-                                  <div className="flex items-center gap-3 text-foreground">
-                                    {item.type === 'Video Call' ? <VideoIcon className="w-4 h-4 text-primary" /> : <Phone className="w-4 h-4 text-primary" />}
-                                    <span>{item.type}</span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Right Side - Actions & Tracking */}
-                            <div className="flex flex-col gap-3 border-t md:border-t-0 md:border-l border-border/50 pt-6 md:pt-0 md:pl-8">
-                              {item.status === 'To book' && (
-                                <>
-                                  <Button className="w-full bg-primary text-white">Book Appointment</Button>
-                                  {(item.lateCancelDate || item.missedDate) && (
-                                    <div className="mt-2 space-y-1">
-                                      {item.lateCancelDate && (
-                                        <Badge className="text-[10px] bg-yellow-100 text-yellow-800 w-full justify-start">
-                                          1 Late Cancel · {item.lateCancelDate}
-                                        </Badge>
-                                      )}
-                                      {item.missedDate && (
-                                        <Badge className="text-[10px] bg-red-100 text-red-800 w-full justify-start">
-                                          1 Missed · {item.missedDate}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                              {item.status === 'Booked' && (
-                                <>
-                                  {item.type === 'Video Call' ? (
-                                    <Button variant="outline" className="w-full">Switch to Phone</Button>
-                                  ) : (
-                                    <Button variant="outline" className="w-full">Switch to Zoom</Button>
-                                  )}
-                                  <Button variant="outline" className="w-full">Reschedule</Button>
-                                  <Button variant="outline" className="w-full">Cancel</Button>
-                                  {item.lateCancelDate && (
-                                    <Badge className="text-[10px] bg-yellow-100 text-yellow-800 w-full justify-start mt-1">
-                                      1 Late Cancel · {item.lateCancelDate}
-                                    </Badge>
-                                  )}
-                                </>
-                              )}
-                              {item.status === 'To confirm' && (
-                                <>
-                                  <Button className="w-full bg-primary text-white">Confirm</Button>
-                                  <Button variant="outline" className="w-full">Reschedule</Button>
-                                  <Button variant="outline" className="w-full">Cancel</Button>
-                                </>
-                              )}
-                              {item.status === 'Confirmed' && (
-                                <>
-                                  <Button variant="outline" className="w-full">Reschedule</Button>
-                                  <Button variant="outline" className="w-full">Cancel</Button>
-                                </>
-                              )}
-                              {item.status === 'Ready' && item.type === 'Video Call' && (
-                                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                                  <VideoIcon className="w-4 h-4 mr-2" /> Join Now
-                                </Button>
-                              )}
-                              {item.status === 'Ready' && item.type === 'Phone Call' && (
-                                <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
-                                  <p className="text-[10px] font-semibold text-muted-foreground mb-2">INCOMING CALL</p>
-                                  <p className="text-sm font-medium text-foreground">You can expect a phone call to (604) 555-0142</p>
-                                  <p className="text-[10px] text-muted-foreground mt-1">between 9:00 AM - 9:15 AM</p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-
-                <div className="space-y-3 mt-6">
-                  {futureStages.map((stage, index) => (
-                    <Card key={index} className="border border-border/60 shadow-sm bg-white/80 rounded-xl" data-testid={`card-future-stage-${index}`}>
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold text-foreground text-sm">{stage.name}</h3>
-                          <p className="text-[10px] text-muted-foreground mt-1">{stage.date}</p>
-                        </div>
-                        <Badge variant="outline" className="text-[10px] h-5 bg-muted/50 text-muted-foreground border-border shrink-0">
-                          {stage.status}
-                        </Badge>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                ))}
               </div>
-            ) : (
-              <div className="text-center py-16 bg-white rounded-xl border border-dashed border-border/60 shadow-sm">
-                <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="w-8 h-8" />
-                </div>
-                <h3 className="font-bold text-xl mb-2 text-foreground">No Upcoming Appointments</h3>
-                <p className="text-muted-foreground max-w-sm mx-auto">
-                  You don't have any visits scheduled at the moment.
-                </p>
-              </div>
-            )}
+            </div>
           </TabsContent>
 
           <TabsContent value="past" className="space-y-6 animate-in fade-in-50 duration-300">
@@ -635,15 +438,25 @@ export default function Appointments() {
                           <p className="text-[10px] text-muted-foreground mt-1">{format(new Date(appt.date), "MMM yyyy")}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Completed
-                          </span>
+                          {appt.id === 1 && (
+                            <>
+                              <Badge className="text-[10px] bg-yellow-100 text-yellow-800 border-none">
+                                Late Cancellation · June 10, 2025
+                              </Badge>
+                              <Badge className="text-[10px] bg-red-100 text-red-800 border-none">
+                                Missed Appointment · June 5, 2025
+                              </Badge>
+                            </>
+                          )}
+                          <Badge className="bg-emerald-100 text-emerald-700 border-none">
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Completed
+                          </Badge>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-sm gap-1.5 group">
+                              <ChevronDown className="w-3.5 h-3.5 transition-transform group-data-[state=open]:rotate-180" />
+                            </Button>
+                          </CollapsibleTrigger>
                         </div>
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-sm gap-1.5 group" data-testid={`button-care-plan-${appt.id}`}>
-                            Care Plan <ChevronDown className="w-3.5 h-3.5 transition-transform group-data-[state=open]:rotate-180" />
-                          </Button>
-                        </CollapsibleTrigger>
                       </div>
 
                       <CollapsibleContent>
@@ -694,11 +507,10 @@ export default function Appointments() {
                           </div>
                           <div className="flex items-center gap-3 text-foreground">
                             <div className="w-8 flex justify-center">
-                              {appt.type === 'Video Call' ? <VideoIcon className="w-5 h-5 text-primary" /> : <MapPin className="w-5 h-5 text-primary" />}
+                              {appt.type === 'Video Call' ? <VideoIcon className="w-5 h-5 text-primary" /> : appt.type === 'Phone' ? <Phone className="w-5 h-5 text-primary" /> : <MapPin className="w-5 h-5 text-primary" />}
                             </div>
                             <span className="font-medium">
-                              {appt.location}
-                              {appt.type === 'Video Call' && " (Zoom)"}
+                              {appt.type === 'Video Call' ? 'Zoom Call' : appt.type === 'Phone' ? 'Phone Call' : appt.location}
                             </span>
                           </div>
                         </div>

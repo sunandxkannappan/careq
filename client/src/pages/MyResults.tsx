@@ -4,14 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { FlaskConical, ScanLine, MessageSquareText, Clock, CheckCircle2, Eye } from "lucide-react";
+import { FlaskConical, ScanLine, Clock, CheckCircle2, Eye, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const categoryIcons = {
   Labs: FlaskConical,
   Imaging: ScanLine,
-  "E-Advice": MessageSquareText,
 };
 
 const statusConfig = {
@@ -45,12 +44,6 @@ function ResultCard({ result }: { result: any }) {
             <Badge variant="outline" className={cn("shrink-0", statusConfig.Pending.className)} data-testid={`badge-result-status-${result.id}`}>
               <Clock className="w-3 h-3 mr-1" />
               Pending
-            </Badge>
-          )}
-          {result.status === "Available" && (
-            <Badge variant="outline" className="shrink-0 bg-blue-50 text-blue-700 border-blue-200" data-testid={`badge-result-status-${result.id}`}>
-              <Eye className="w-3 h-3 mr-1" />
-              New
             </Badge>
           )}
         </div>
@@ -121,26 +114,25 @@ export default function MyResults() {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex justify-between items-center pt-2 flex-wrap gap-2">
-          <h1 className="font-display text-3xl font-bold text-foreground" data-testid="text-page-title">My Results</h1>
-          <div className="flex items-center gap-3">
-            {pendingCount > 0 && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200" data-testid="badge-pending-count">
-                <Clock className="w-3 h-3 mr-1" />
-                {pendingCount} Pending
-              </Badge>
-            )}
-            {availableCount > 0 && (
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20" data-testid="badge-available-count">
-                <Eye className="w-3 h-3 mr-1" />
-                {availableCount} New
-              </Badge>
-            )}
+        <header className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Activity className="w-8 h-8 text-primary" />
+            <h1 className="font-display text-3xl font-bold text-foreground" data-testid="text-page-title">Results</h1>
           </div>
-        </div>
+          <p className="text-muted-foreground">Access your lab results and imaging reports</p>
+        </header>
+
+        {pendingCount > 0 && (
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200" data-testid="badge-pending-count">
+              <Clock className="w-3 h-3 mr-1" />
+              {pendingCount} Pending
+            </Badge>
+          </div>
+        )}
 
         <Tabs defaultValue="labs" className="w-full">
-          <TabsList className="grid w-full max-w-lg grid-cols-3 mb-8 bg-muted/50 p-1 rounded-lg" data-testid="tabs-results">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-8 bg-muted/50 p-1 rounded-lg" data-testid="tabs-results">
             <TabsTrigger
               value="labs"
               className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all gap-2"
@@ -157,14 +149,6 @@ export default function MyResults() {
               <ScanLine className="w-4 h-4" />
               Imaging ({imaging.length})
             </TabsTrigger>
-            <TabsTrigger
-              value="eadvice"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all gap-2"
-              data-testid="tab-eadvice"
-            >
-              <MessageSquareText className="w-4 h-4" />
-              E-Advice ({eAdvice.length})
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="labs" className="space-y-2 animate-in fade-in-50 duration-300" data-testid="content-labs">
@@ -174,11 +158,13 @@ export default function MyResults() {
           <TabsContent value="imaging" className="space-y-2 animate-in fade-in-50 duration-300" data-testid="content-imaging">
             <ResultsList results={imaging} emptyMessage="No imaging results available yet." />
           </TabsContent>
-
-          <TabsContent value="eadvice" className="space-y-2 animate-in fade-in-50 duration-300" data-testid="content-eadvice">
-            <ResultsList results={eAdvice} emptyMessage="No e-advice available yet." />
-          </TabsContent>
         </Tabs>
+
+        <div className="mt-12 p-6 bg-primary/5 border border-primary/20 rounded-xl">
+          <p className="text-sm text-foreground">
+            Don't have a MyHealth account yet? <span className="font-semibold text-primary">Sign up at myhealth.gov.bc.ca</span> to access additional documents and health information.
+          </p>
+        </div>
       </div>
     </Layout>
   );

@@ -1,28 +1,33 @@
 import { Layout } from "@/components/Layout";
-import { useResources, useFaqs } from "@/hooks/use-data";
+import { useResources, useFaqs, useMyResults } from "@/hooks/use-data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Phone, Clock, AlertTriangle, FileText, PlayCircle, Download, ExternalLink, HelpCircle, Dumbbell, BookOpen, Contact, Search } from "lucide-react";
+import { Phone, Clock, AlertTriangle, FileText, PlayCircle, Download, ExternalLink, HelpCircle, Dumbbell, BookOpen, Contact, Search, MessageSquareText } from "lucide-react";
 import { useState } from "react";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Resource } from "@shared/schema";
 
 export default function Resources() {
   const { data: resources, isLoading: resourcesLoading } = useResources();
   const { data: faqs, isLoading: faqsLoading } = useFaqs();
+  const { data: results, isLoading: resultsLoading } = useMyResults();
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
 
-  if (resourcesLoading || faqsLoading) return <Layout><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mt-20" /></Layout>;
+  if (resourcesLoading || faqsLoading || resultsLoading) return <Layout><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mt-20" /></Layout>;
+
+  const eAdvice = results?.filter((r) => r.category === "E-Advice") || [];
 
   const getIcon = (type: string, category: string) => {
     if (category === 'Contact') return <Contact className="w-5 h-5 text-indigo-500" />;
     if (category === 'FAQ') return <HelpCircle className="w-5 h-5 text-amber-500" />;
     if (category === 'Exercise') return <Dumbbell className="w-5 h-5 text-sky-500" />;
-    
+    if (category === 'E-Advice') return <MessageSquareText className="w-5 h-5 text-green-500" />;
+
     switch (type) {
       case 'Video': return <PlayCircle className="w-5 h-5 text-red-500" />;
       case 'PDF': return <FileText className="w-5 h-5 text-blue-500" />;
@@ -31,10 +36,8 @@ export default function Resources() {
   };
 
   const categories = [
-    { id: 'all', label: 'All Resources' },
-    { id: 'Education', label: 'Education' },
-    { id: 'Exercise', label: 'Exercise' },
     { id: 'Contact', label: 'Contacts' },
+    { id: 'E-Advice', label: 'E-Advice' },
     { id: 'FAQ', label: 'FAQ' },
   ];
 
@@ -224,7 +227,7 @@ export default function Resources() {
                         </Accordion>
                       </CardContent>
                     </Card>
-                    
+
                      <div className="mt-8">
                        <h3 className="text-lg font-bold mb-4 px-1">Related Resources</h3>
                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -234,23 +237,82 @@ export default function Resources() {
                        </div>
                     </div>
                   </div>
+                ) : cat.id === 'E-Advice' ? (
+                  <div className="max-w-3xl mx-auto space-y-2">
+                    {eAdvice.length > 0 ? (
+                      <Accordion type="single" collapsible className="w-full space-y-2">
+                        {eAdvice.map((advice) => (
+                          <AccordionItem
+                            key={advice.id}
+                            value={`advice-${advice.id}`}
+                            className="border rounded-lg bg-white px-4 shadow-sm border-border/60 data-[state=open]:border-primary/30 transition-all"
+                          >
+                            <AccordionTrigger className="hover:no-underline py-4">
+                              <div className="flex items-center gap-3 w-full pr-4">
+                                <div className="w-9 h-9 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
+                                  <MessageSquareText className="w-4.5 h-4.5 text-muted-foreground" />
+                                </div>
+                                <div className="flex-1 text-left min-w-0">
+                                  <p className="font-semibold text-foreground text-sm">{advice.title}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {format(new Date(advice.date), "MMM d, yyyy")}
+                                  </p>
+                                </div>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pb-4 pt-1">
+                              <div className="border-t border-border/40 pt-3 mt-1 space-y-3 pl-13">
+                                {advice.summary && (
+                                  <div>
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Message</p>
+                                    <p className="text-sm text-foreground">{advice.summary}</p>
+                                  </div>
+                                )}
+                                {advice.details && (
+                                  <div>
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Details</p>
+                                    <p className="text-sm text-foreground leading-relaxed">{advice.details}</p>
+                                  </div>
+                                )}
+                                <div className="pt-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2"
+                                    onClick={() => {
+                                      const link = document.createElement("a");
+                                      link.href = "data:text/plain;charset=utf-8," + encodeURIComponent(`E-Advice: ${advice.title}\n\n${advice.summary || ''}\n\n${advice.details || ''}`);
+                                      link.download = `${advice.title.toLowerCase().replace(/\s+/g, '-')}.txt`;
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                    }}
+                                  >
+                                    <Download className="w-4 h-4" /> Download
+                                  </Button>
+                                </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    ) : (
+                      <Card className="border-none shadow-sm bg-white">
+                        <CardContent className="py-12 text-center">
+                          <p className="text-muted-foreground text-sm">No e-advice available yet.</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
                 ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {resources
-                    ?.filter(r => {
-                      if (cat.id === 'all') return true;
-                      if (cat.id === 'Education') return r.category === 'Education' || r.category === 'Medication';
-                      return r.category === cat.id;
-                    })
+                    ?.filter(r => r.category === cat.id)
                     .map(resource => (
                     <ResourceCard key={resource.id} resource={resource} />
                   ))}
-                  
-                  {resources && resources.filter(r => {
-                      if (cat.id === 'all') return true;
-                      if (cat.id === 'Education') return r.category === 'Education' || r.category === 'Medication';
-                      return r.category === cat.id;
-                    }).length === 0 && (
+
+                  {resources && resources.filter(r => r.category === cat.id).length === 0 && (
                     <div className="col-span-full py-12 text-center bg-muted/20 rounded-xl border border-dashed border-border/60">
                       <Search className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                       <p className="text-muted-foreground font-medium">No resources found in this category.</p>
