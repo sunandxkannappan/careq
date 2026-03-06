@@ -60,7 +60,7 @@ export default function Dashboard() {
                   </div>
                   <Progress value={progress} className="h-2.5 bg-black/20" indicatorClassName="bg-white" />
                 </div>
-                <Link href="/waitlist" className="block">
+                <Link href="/status" className="block">
                   <Button variant="secondary" className="w-full bg-white text-primary border-none shadow-lg shadow-black/10" asChild>
                     <span>View Detailed Status</span>
                   </Button>

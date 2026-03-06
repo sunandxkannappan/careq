@@ -34,7 +34,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { icon: Home, label: "Dashboard", href: "/referral" },
-    { icon: Hourglass, label: "Status", href: "/waitlist" },
+    { icon: Hourglass, label: "Status", href: "/status" },
     { icon: CalendarDays, label: "Appointments", href: "/appointments" },
     { icon: ClipboardList, label: "Results", href: "/my-results" },
     { icon: BookOpen, label: "Resources", href: "/resources" },

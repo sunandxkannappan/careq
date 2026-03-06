@@ -3,25 +3,29 @@ import { Layout } from "@/components/Layout";
 import { useWaitlist } from "@/hooks/use-data";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { 
-  CheckCircle2, 
-  Clock, 
-  Activity, 
-  CalendarDays, 
-  Hourglass, 
-  ChevronDown, 
-  ChevronUp, 
-  CalendarCheck, 
-  CalendarClock, 
-  CircleCheckBig, 
-  Info, 
-  Video, 
+import {
+  CheckCircle2,
+  Clock,
+  Activity,
+  CalendarDays,
+  Hourglass,
+  ChevronDown,
+  ChevronUp,
+  CalendarCheck,
+  CalendarClock,
+  CircleCheckBig,
+  Info,
+  Video,
   MapPin,
   Pill,
   Dumbbell,
   Stethoscope,
   ClipboardCheck,
-  FileText
+  FileText,
+  Download,
+  Microscope,
+  Heart,
+  Zap
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
@@ -33,7 +37,7 @@ export default function Waitlist() {
   if (!waitlist) return null;
 
   const stages = [
-    { id: 1, name: "Referred", date: "Jun 2025", mode: "fax" as const },
+    { id: 1, name: "Referred", date: "Jun 2025", mode: "in-person" as const },
     { id: 2, name: "Registered", date: "Jul 2025", mode: "virtual" as const },
     { id: 3, name: "Initial Appointment", date: "Sep 2025", mode: "in-person" as const },
     { id: 4, name: "3 Month Appointment", date: "Dec 2025", mode: "virtual" as const },
@@ -148,15 +152,21 @@ export default function Waitlist() {
               {/* Two-Column: Conditions Summary + Journey */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
                 
-                {/* Conditions Summary */}
+                {/* Latest Summary */}
                 <div className="lg:col-span-2">
-                  <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2 mb-4">
-                    <Activity className="w-4 h-4 text-primary" />
-                    Conditions Summary
-                  </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-primary" />
+                      Latest Summary
+                    </h3>
+                    <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors">
+                      <Download className="w-4 h-4" />
+                      Download
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 gap-4">
                     <div className="bg-muted/30 p-5 rounded-lg border border-border/50">
-                      <h4 className="font-semibold text-base text-foreground mb-3">Conditions</h4>
+                      <h4 className="font-semibold text-base text-foreground mb-3">Diagnoses</h4>
                       <ul className="text-base text-foreground/80 leading-relaxed font-bold list-disc list-inside">
                         <li>Left Hip Osteoarthritis</li>
                         <li>Right Knee Osteoarthritis</li>
@@ -169,55 +179,75 @@ export default function Waitlist() {
                       </p>
                     </div>
                     <div className="bg-muted/30 p-5 rounded-lg border border-border/50">
-                      <h4 className="font-semibold text-base text-foreground mb-3">Care Plan</h4>
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
-                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
-                            <Pill className="w-5 h-5" />
+                      <h4 className="font-semibold text-base text-foreground mb-4">Plan</h4>
+                      <div className="space-y-4">
+                        <div>
+                          <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Pharmacologic</h5>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
+                              <div className="p-2 bg-primary/10 text-primary rounded-lg shrink-0">
+                                <Pill className="w-5 h-5" />
+                              </div>
+                              <p className="text-sm font-medium">Daily Naproxen (500mg) for joint inflammation</p>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
+                              <div className="p-2 bg-primary/10 text-primary rounded-lg shrink-0">
+                                <Zap className="w-5 h-5" />
+                              </div>
+                              <p className="text-sm font-medium">Supplement regimen for bone health</p>
+                            </div>
                           </div>
-                          <p className="text-sm font-medium">Daily Naproxen (500mg) for joint inflammation management</p>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
-                          <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg shrink-0">
-                            <Dumbbell className="w-5 h-5" />
+                        <div>
+                          <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Allied Health</h5>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
+                              <div className="p-2 bg-primary/10 text-primary rounded-lg shrink-0">
+                                <Dumbbell className="w-5 h-5" />
+                              </div>
+                              <p className="text-sm font-medium">Pre-habilitation strengthening exercises</p>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
+                              <div className="p-2 bg-primary/10 text-primary rounded-lg shrink-0">
+                                <Activity className="w-5 h-5" />
+                              </div>
+                              <p className="text-sm font-medium">Mobility and low-impact conditioning</p>
+                            </div>
                           </div>
-                          <p className="text-sm font-medium">Hip-specific pre-habilitation strengthening exercises</p>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
-                          <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg shrink-0">
-                            <Dumbbell className="w-5 h-5" />
+                        <div>
+                          <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Investigations</h5>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
+                              <div className="p-2 bg-primary/10 text-primary rounded-lg shrink-0">
+                                <Microscope className="w-5 h-5" />
+                              </div>
+                              <p className="text-sm font-medium">Pre-operative blood panels and imaging</p>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
+                              <div className="p-2 bg-primary/10 text-primary rounded-lg shrink-0">
+                                <Heart className="w-5 h-5" />
+                              </div>
+                              <p className="text-sm font-medium">Obtain cardiac clearance</p>
+                            </div>
                           </div>
-                          <p className="text-sm font-medium">Knee-focus mobility and low-impact conditioning</p>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
-                          <div className="p-2 bg-purple-50 text-purple-600 rounded-lg shrink-0">
-                            <Stethoscope className="w-5 h-5" />
+                        <div>
+                          <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Clinical Review</h5>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
+                              <div className="p-2 bg-primary/10 text-primary rounded-lg shrink-0">
+                                <Stethoscope className="w-5 h-5" />
+                              </div>
+                              <p className="text-sm font-medium">Monthly mobility assessments</p>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
+                              <div className="p-2 bg-primary/10 text-primary rounded-lg shrink-0">
+                                <ClipboardCheck className="w-5 h-5" />
+                              </div>
+                              <p className="text-sm font-medium">Surgical readiness review</p>
+                            </div>
                           </div>
-                          <p className="text-sm font-medium">Monthly mobility assessments with clinical team</p>
-                        </div>
-                        <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
-                          <div className="p-2 bg-purple-50 text-purple-600 rounded-lg shrink-0">
-                            <Stethoscope className="w-5 h-5" />
-                          </div>
-                          <p className="text-sm font-medium">Scheduled 12-week surgical readiness review</p>
-                        </div>
-                        <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
-                          <div className="p-2 bg-amber-50 text-amber-600 rounded-lg shrink-0">
-                            <ClipboardCheck className="w-5 h-5" />
-                          </div>
-                          <p className="text-sm font-medium">Complete pre-operative blood panels and imaging</p>
-                        </div>
-                        <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
-                          <div className="p-2 bg-amber-50 text-amber-600 rounded-lg shrink-0">
-                            <ClipboardCheck className="w-5 h-5" />
-                          </div>
-                          <p className="text-sm font-medium">Obtain cardiac clearance for surgical candidacy</p>
-                        </div>
-                        <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-border/30">
-                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
-                            <Pill className="w-5 h-5" />
-                          </div>
-                          <p className="text-sm font-medium">Supplement regimen for bone health optimization</p>
                         </div>
                       </div>
                     </div>
@@ -243,15 +273,15 @@ export default function Waitlist() {
                             <div className={cn(
                               "w-10 h-10 rounded-full flex items-center justify-center border-2 z-10 bg-background transition-colors shrink-0",
                               isCompleted ? "border-primary bg-primary text-white" :
-                              isCurrent ? "border-primary text-primary ring-4 ring-primary/10" :
+                              isCurrent ? "border-primary bg-white text-primary border-4" :
                               "border-muted-foreground/30 text-muted-foreground/30"
                             )}>
                               {isCompleted ? <CheckCircle2 className="w-6 h-6" /> :
-                               isCurrent ? <div className="w-3 h-3 bg-primary rounded-full animate-pulse" /> :
+                               isCurrent ? <div className="w-2.5 h-2.5 bg-primary rounded-full" /> :
                                <div className="w-2 h-2 bg-muted-foreground/30 rounded-full" />
                               }
                             </div>
-                            <div className={cn("pt-1 transition-colors min-w-0", !isCompleted && !isCurrent && "opacity-50")}>
+                            <div className={cn("pt-1 transition-colors min-w-0")}>
                               <h4 className={cn(
                                 "font-bold text-sm leading-tight",
                                 isCurrent ? "text-primary" : "text-foreground"
@@ -261,16 +291,13 @@ export default function Waitlist() {
                               <p className="text-xs text-muted-foreground mt-0.5">{stage.date}</p>
                               {stage.mode && (
                                 <span className={cn(
-                                  "inline-flex items-center gap-1 text-[10px] font-medium mt-1 px-1.5 py-0.5 rounded-full",
-                                  stage.mode === "virtual" ? "bg-blue-50 text-blue-600" : 
-                                  stage.mode === "fax" ? "bg-slate-100 text-slate-600" :
-                                  "bg-amber-50 text-amber-700"
+                                  "inline-flex items-center gap-1 text-[10px] font-medium mt-1 px-2 py-1 rounded-full",
+                                  stage.mode === "virtual" ? "bg-secondary/20 text-secondary-foreground" :
+                                  "bg-primary text-white"
                                 )}>
-                                  {stage.mode === "virtual" ? <Video className="w-2.5 h-2.5" /> : 
-                                   stage.mode === "fax" ? <FileText className="w-2.5 h-2.5" /> :
+                                  {stage.mode === "virtual" ? <Video className="w-2.5 h-2.5" /> :
                                    <MapPin className="w-2.5 h-2.5" />}
-                                  {stage.mode === "virtual" ? "Virtual" : 
-                                   stage.mode === "fax" ? "Fax" :
+                                  {stage.mode === "virtual" ? "Virtual" :
                                    "In Person"}
                                 </span>
                               )}

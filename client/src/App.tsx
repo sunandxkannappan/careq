@@ -20,7 +20,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/referral" component={Dashboard} />
-      <Route path="/waitlist" component={Waitlist} />
+      <Route path="/status" component={Waitlist} />
       <Route path="/appointments" component={Appointments} />
       <Route path="/forms/health-history" component={HealthHistoryForm} />
       <Route path="/book-appointment" component={BookAppointment} />
