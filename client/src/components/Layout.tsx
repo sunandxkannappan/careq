@@ -8,29 +8,16 @@ import {
   User,
   Menu,
   X,
-  LogOut,
-  ChevronDown
+  LogOut
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/hooks/use-data";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [selectedClinic, setSelectedClinic] = useState("Alberta Hip and Knee Clinic");
   const { data: user } = useUser();
-
-  const clinics = [
-    "Alberta Hip and Knee Clinic",
-    "Southern Alberta Surgical Center"
-  ];
 
   const navItems = [
     { icon: Home, label: "Dashboard", href: "/referral" },
@@ -97,32 +84,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </p>
             </div>
           </Link>
-
-          {/* Clinic selector */}
-          <DropdownMenu>
-            <DropdownMenuTrigger className={cn(
-              "flex items-center justify-between w-full",
-              "px-3 py-2 rounded-lg",
-              "text-[11px] font-medium text-slate-300",
-              "bg-white/[0.06] border border-white/[0.08]",
-              "hover:bg-white/10 hover:text-slate-100",
-              "transition-colors focus:outline-none"
-            )}>
-              <span className="truncate">{selectedClinic}</span>
-              <ChevronDown className="w-3.5 h-3.5 ml-2 shrink-0 text-slate-500" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64">
-              {clinics.map((clinic) => (
-                <DropdownMenuItem
-                  key={clinic}
-                  onClick={() => setSelectedClinic(clinic)}
-                  className={cn(clinic === selectedClinic && "bg-primary/5 text-primary font-semibold")}
-                >
-                  {clinic}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
 
         {/* Divider */}
@@ -178,7 +139,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <button
               className="text-slate-500 hover:text-red-400 transition-colors p-1 rounded shrink-0"
-              onClick={() => { localStorage.removeItem("careq_role"); window.location.href = "/"; }}
+              onClick={() => {
+                localStorage.removeItem("careq_auth");
+                localStorage.removeItem("careq_onboarding");
+                window.location.href = "/login";
+              }}
               data-testid="button-patient-logout"
               aria-label="Log out"
             >
