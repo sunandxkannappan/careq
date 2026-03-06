@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calendar, MapPin, Video, Phone, Clock, Video as VideoIcon, Download, ChevronRight, ChevronDown, AlertCircle, CheckCircle2, Circle } from "lucide-react";
+import { Calendar, MapPin, Video, Phone, Clock, Video as VideoIcon, Download, ChevronRight, ChevronDown, AlertCircle, CheckCircle2, Circle, Hourglass } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { useState } from "react";
 import { Appointment } from "@shared/schema";
@@ -32,10 +32,24 @@ const carePlanByAppointment: Record<number, { assessment: string; carePlan: stri
 };
 
 const futureStages = [
-  { name: "9 Month Appointment", description: "Pending" },
-  { name: "12 Month Appointment", description: "Pending" },
-  { name: "15 Month Appointment", description: "Pending" },
-  { name: "Surgical Consult", description: "18 Months" },
+  { name: "9 Month Appointment", date: "Jun 2026", status: "Planned" },
+  { name: "12 Month Appointment", date: "Sep 2026", status: "Planned" },
+  { name: "15 Month Appointment", date: "Dec 2026", status: "Planned" },
+];
+
+const appointmentTracking = {
+  lateCancellations: 1,
+  missedAppointments: 0,
+};
+
+// 6-Month appointment statuses to display
+const sixMonthStatuses = [
+  { status: "To book", type: "Video Call", date: "Jun 2026", time: "TBD", lateCancelDate: "Jun 15", missedDate: null },
+  { status: "Booked", type: "Phone Call", date: "Jun 2026", time: "9:00 AM", lateCancelDate: "Jun 15", missedDate: null },
+  { status: "To confirm", type: "Video Call", date: "Jun 2026", time: "10:00 AM", lateCancelDate: null, missedDate: null },
+  { status: "Confirmed", type: "Phone Call", date: "Jun 2026", time: "11:00 AM", lateCancelDate: null, missedDate: null },
+  { status: "Ready", type: "Video Call", date: "Jun 2026", time: "9:00 AM", lateCancelDate: null, missedDate: null },
+  { status: "Ready", type: "Phone Call", date: "Jun 2026", time: "9:00 AM", lateCancelDate: null, missedDate: null },
 ];
 
 export default function Appointments() {
@@ -134,11 +148,20 @@ export default function Appointments() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        
-        <div className="flex justify-between items-center pt-2">
-          <h1 className="font-display text-3xl font-bold text-foreground" data-testid="text-appointments-title">Appointments</h1>
+      <div className="max-w-6xl mx-auto space-y-8">
+
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-border/40">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground flex items-center gap-3" data-testid="text-appointments-title">
+              <Calendar className="w-8 h-8 text-primary" />
+              Appointments
+            </h1>
+            <p className="text-muted-foreground mt-1">View and manage your upcoming and past appointments</p>
+          </div>
           
+        </header>
+
+        <div>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
@@ -201,37 +224,39 @@ export default function Appointments() {
           </Dialog>
         </div>
 
-        <Tabs defaultValue="upcoming" className="w-full">
+        <Tabs defaultValue="future" className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2 mb-8 bg-muted/50 p-1 rounded-lg">
-            <TabsTrigger value="upcoming" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">
-              Upcoming
+            <TabsTrigger value="future" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">
+              Future
             </TabsTrigger>
             <TabsTrigger value="past" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">
               Past
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="upcoming" className="space-y-6 animate-in fade-in-50 duration-300">
+          <TabsContent value="future" className="space-y-6 animate-in fade-in-50 duration-300">
             
             {sortedUpcoming.length > 0 ? (
               <div className="space-y-6">
-                {sortedUpcoming.map((appt) => (
+                {sortedUpcoming.map((appt, index) => {
+                  const dateDisplay = format(new Date(appt.date), "MMM yyyy");
+                  const statusDisplay = appt.status === 'Pending' ? 'Pending Booking' : 'Booked';
+
+                  return (
                   <Card key={appt.id} className="border-none shadow-md bg-white rounded-xl overflow-hidden" data-testid={`card-appointment-${appt.id}`}>
                     <CardContent className="p-0">
-                      
+
                       <div className="bg-muted/30 px-6 py-3 border-b border-border/40 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-foreground">{appt.title}</span>
+                        <div>
+                          <h3 className="text-sm font-bold text-foreground">{appt.title}</h3>
+                          <p className="text-[10px] text-muted-foreground mt-1">{dateDisplay}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-muted-foreground">Status:</span>
-                          <Badge variant="secondary" className={cn(
-                            "border-none px-2 py-0 h-5 text-[10px] font-bold uppercase tracking-wider",
-                            appt.status === 'Pending' ? "bg-amber-100 text-amber-700" : "bg-primary/10 text-primary"
-                          )}>
-                            {appt.status === 'Pending' ? 'Pending Booking' : 'Booked'}
-                          </Badge>
-                        </div>
+                        <Badge variant="secondary" className={cn(
+                          "border-none px-2 py-0 h-5 text-[10px] font-bold uppercase tracking-wider shrink-0",
+                          statusDisplay === 'Pending Booking' ? "bg-amber-100 text-amber-700" : "bg-primary/10 text-primary"
+                        )}>
+                          {statusDisplay}
+                        </Badge>
                       </div>
 
                       <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -291,12 +316,18 @@ export default function Appointments() {
                              </div>
                           </div>
 
-                          {rescheduleCount > 0 && (
-                            <div className="flex justify-end pt-2">
-                              <span className="text-[10px] text-muted-foreground/60 italic flex items-center gap-1">
-                                <AlertCircle className="w-3 h-3" />
-                                Previously rescheduled {rescheduleCount} {rescheduleCount === 1 ? "time" : "times"}
-                              </span>
+                          {(rescheduleCount > 0 || appointmentTracking.lateCancellations > 0 || appointmentTracking.missedAppointments > 0) && (
+                            <div className="flex gap-2 pt-2">
+                              {appointmentTracking.lateCancellations > 0 && (
+                                <Badge className="text-[10px] bg-yellow-100 text-yellow-800 border-none">
+                                  {appointmentTracking.lateCancellations} Late Cancel
+                                </Badge>
+                              )}
+                              {appointmentTracking.missedAppointments > 0 && (
+                                <Badge className="text-[10px] bg-red-100 text-red-800 border-none">
+                                  {appointmentTracking.missedAppointments} Missed
+                                </Badge>
+                              )}
                             </div>
                           )}
 
@@ -380,18 +411,177 @@ export default function Appointments() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
 
-                <div className="space-y-3 mt-2">
+                {primaryAppointment && (
+                  <div className="space-y-6 mt-8">
+                    {sixMonthStatuses.map((item, idx) => (
+                      <Card key={idx} className="border-none shadow-md bg-white rounded-xl overflow-hidden">
+                        <CardContent className="p-0">
+                          <div className="bg-muted/30 px-6 py-3 border-b border-border/40 flex items-center justify-between">
+                            <div>
+                              <h3 className="text-sm font-bold text-foreground">6 Month Appointment</h3>
+                              <p className="text-[10px] text-muted-foreground mt-1">{item.date}</p>
+                            </div>
+                            <Badge variant="outline" className={cn(
+                              "text-[10px] h-5 border-none shrink-0",
+                              item.status === 'To book' ? "bg-muted/50 text-muted-foreground" :
+                              item.status === 'Ready' ? "bg-emerald-100 text-emerald-700" :
+                              "bg-muted/50 text-muted-foreground"
+                            )}>
+                              {item.status}
+                            </Badge>
+                          </div>
+
+                          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {/* Left Side - Care Team & Details */}
+                            <div className="md:col-span-2 space-y-4">
+                              <div>
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Care Team</h4>
+                                <div className="flex gap-4">
+                                  {item.status === 'To book' ? (
+                                    <>
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-lg bg-muted"></div>
+                                        <div>
+                                          <p className="font-semibold text-foreground text-sm">TBD</p>
+                                          <p className="text-xs text-muted-foreground">Physician</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-lg bg-muted"></div>
+                                        <div>
+                                          <p className="font-semibold text-foreground text-sm">TBD</p>
+                                          <p className="text-xs text-muted-foreground">Nurse</p>
+                                        </div>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div className="flex items-center gap-3">
+                                        <Avatar className="w-12 h-12 rounded-lg border border-border">
+                                          <AvatarImage src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=100&h=100" />
+                                          <AvatarFallback className="rounded-lg">Dr</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                          <p className="font-semibold text-foreground text-sm">Dr. Munib Ali</p>
+                                          <p className="text-xs text-muted-foreground">Physician</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-3">
+                                        <Avatar className="w-12 h-12 rounded-lg border border-border">
+                                          <AvatarImage src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100&h=100" />
+                                          <AvatarFallback className="rounded-lg">RN</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                          <p className="font-semibold text-foreground text-sm">Sarah Jenkins</p>
+                                          <p className="text-xs text-muted-foreground">Nurse</p>
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+
+                              {item.status !== 'To book' && (
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex items-center gap-3 text-foreground">
+                                    <Calendar className="w-4 h-4 text-primary" />
+                                    <span>{item.date}</span>
+                                  </div>
+                                  <div className="flex items-center gap-3 text-foreground">
+                                    <Clock className="w-4 h-4 text-primary" />
+                                    <span>{item.time}</span>
+                                  </div>
+                                  <div className="flex items-center gap-3 text-foreground">
+                                    {item.type === 'Video Call' ? <VideoIcon className="w-4 h-4 text-primary" /> : <Phone className="w-4 h-4 text-primary" />}
+                                    <span>{item.type}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Right Side - Actions & Tracking */}
+                            <div className="flex flex-col gap-3 border-t md:border-t-0 md:border-l border-border/50 pt-6 md:pt-0 md:pl-8">
+                              {item.status === 'To book' && (
+                                <>
+                                  <Button className="w-full bg-primary text-white">Book Appointment</Button>
+                                  {(item.lateCancelDate || item.missedDate) && (
+                                    <div className="mt-2 space-y-1">
+                                      {item.lateCancelDate && (
+                                        <Badge className="text-[10px] bg-yellow-100 text-yellow-800 w-full justify-start">
+                                          1 Late Cancel · {item.lateCancelDate}
+                                        </Badge>
+                                      )}
+                                      {item.missedDate && (
+                                        <Badge className="text-[10px] bg-red-100 text-red-800 w-full justify-start">
+                                          1 Missed · {item.missedDate}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                              {item.status === 'Booked' && (
+                                <>
+                                  {item.type === 'Video Call' ? (
+                                    <Button variant="outline" className="w-full">Switch to Phone</Button>
+                                  ) : (
+                                    <Button variant="outline" className="w-full">Switch to Zoom</Button>
+                                  )}
+                                  <Button variant="outline" className="w-full">Reschedule</Button>
+                                  <Button variant="outline" className="w-full">Cancel</Button>
+                                  {item.lateCancelDate && (
+                                    <Badge className="text-[10px] bg-yellow-100 text-yellow-800 w-full justify-start mt-1">
+                                      1 Late Cancel · {item.lateCancelDate}
+                                    </Badge>
+                                  )}
+                                </>
+                              )}
+                              {item.status === 'To confirm' && (
+                                <>
+                                  <Button className="w-full bg-primary text-white">Confirm</Button>
+                                  <Button variant="outline" className="w-full">Reschedule</Button>
+                                  <Button variant="outline" className="w-full">Cancel</Button>
+                                </>
+                              )}
+                              {item.status === 'Confirmed' && (
+                                <>
+                                  <Button variant="outline" className="w-full">Reschedule</Button>
+                                  <Button variant="outline" className="w-full">Cancel</Button>
+                                </>
+                              )}
+                              {item.status === 'Ready' && item.type === 'Video Call' && (
+                                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                                  <VideoIcon className="w-4 h-4 mr-2" /> Join Now
+                                </Button>
+                              )}
+                              {item.status === 'Ready' && item.type === 'Phone Call' && (
+                                <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
+                                  <p className="text-[10px] font-semibold text-muted-foreground mb-2">INCOMING CALL</p>
+                                  <p className="text-sm font-medium text-foreground">You can expect a phone call to (604) 555-0142</p>
+                                  <p className="text-[10px] text-muted-foreground mt-1">between 9:00 AM - 9:15 AM</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                <div className="space-y-3 mt-6">
                   {futureStages.map((stage, index) => (
                     <Card key={index} className="border border-border/60 shadow-sm bg-white/80 rounded-xl" data-testid={`card-future-stage-${index}`}>
                       <CardContent className="p-4 flex items-center justify-between">
                         <div>
                           <h3 className="font-semibold text-foreground text-sm">{stage.name}</h3>
-                          <p className="text-[10px] text-muted-foreground">{stage.description}</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">{stage.date}</p>
                         </div>
                         <Badge variant="outline" className="text-[10px] h-5 bg-muted/50 text-muted-foreground border-border shrink-0">
-                          Upcoming
+                          {stage.status}
                         </Badge>
                       </CardContent>
                     </Card>
@@ -411,7 +601,19 @@ export default function Appointments() {
             )}
           </TabsContent>
 
-          <TabsContent value="past" className="space-y-4 animate-in fade-in-50 duration-300">
+          <TabsContent value="past" className="space-y-6 animate-in fade-in-50 duration-300">
+            {past.length > 0 && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Late Cancellations</p>
+                  <p className="text-2xl font-bold text-foreground">{appointmentTracking.lateCancellations}</p>
+                </div>
+                <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Missed Appointments</p>
+                  <p className="text-2xl font-bold text-foreground">{appointmentTracking.missedAppointments}</p>
+                </div>
+              </div>
+            )}
              <div className="grid gap-3">
               {past.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(appt => {
                 const carePlan = carePlanByAppointment[appt.id] || {
@@ -428,8 +630,11 @@ export default function Appointments() {
                     <CardContent className="p-0">
 
                       <div className="bg-muted/30 px-6 py-3 border-b border-border/40 flex items-center justify-between">
+                        <div>
+                          <h3 className="text-sm font-bold text-foreground">{appt.title}</h3>
+                          <p className="text-[10px] text-muted-foreground mt-1">{format(new Date(appt.date), "MMM yyyy")}</p>
+                        </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-muted-foreground">Status:</span>
                           <span className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Completed
                           </span>
@@ -439,13 +644,6 @@ export default function Appointments() {
                             Care Plan <ChevronDown className="w-3.5 h-3.5 transition-transform group-data-[state=open]:rotate-180" />
                           </Button>
                         </CollapsibleTrigger>
-                      </div>
-
-                      <div className="px-6 py-4 flex items-center gap-4">
-                        <div>
-                          <h3 className="font-semibold text-foreground text-base">{appt.title}</h3>
-                          <p className="text-xs text-muted-foreground">{appt.doctorName}</p>
-                        </div>
                       </div>
 
                       <CollapsibleContent>
