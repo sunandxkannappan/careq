@@ -10,37 +10,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calendar, MapPin, Phone, Clock, Video as VideoIcon, ChevronDown, CheckCircle2 } from "lucide-react";
+import { Calendar, MapPin, Phone, Clock, Video as VideoIcon, CheckCircle2, X, LifeBuoy, ChevronDown, Download, MessageSquareText, Pill, Dumbbell, Activity } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const carePlanByAppointment: Record<number, { assessment: string; carePlan: string[] }> = {
-  2: {
-    assessment: "Initial assessment completed. Patient presents with moderate-to-severe left hip osteoarthritis confirmed by imaging. Persistent groin and lateral hip pain with reduced range of motion reported.",
-    carePlan: [
-      "Anti-inflammatory medication (Naproxen 500mg twice daily as needed)",
-      "Referral to pre-habilitation physiotherapy program twice weekly",
-      "Low-impact weight-bearing exercises: swimming, stationary cycling, gentle walking",
-      "Order MRI scan for detailed joint assessment",
-      "Follow up in 3 months to reassess pain levels and mobility",
-    ],
-  },
-};
-
-const appointmentTracking = {
-  lateCancellations: 1,
-  missedAppointments: 0,
-};
-
-// 6-Month appointment statuses to display
 const sixMonthStatuses = [
-  { status: "To book", type: "Zoom Call", date: "Jun 2026", time: "TBD", lateCancelDate: "June 15, 2026", missedDate: "June 10, 2026" },
-  { status: "Booked", type: "Phone Call", date: "Jun 2026", time: "9:00 AM", lateCancelDate: null, missedDate: null },
-  { status: "To confirm", type: "Zoom Call", date: "Jun 2026", time: "10:00 AM", lateCancelDate: null, missedDate: null },
-  { status: "Confirmed", type: "Phone Call", date: "Jun 2026", time: "11:00 AM", lateCancelDate: null, missedDate: null },
-  { status: "Ready", type: "Zoom Call", date: "Jun 2026", time: "9:00 AM", lateCancelDate: null, missedDate: null },
-  { status: "Ready", type: "Phone Call", date: "Jun 2026", time: "9:00 AM", lateCancelDate: null, missedDate: null },
+  { status: "Overdue", type: "TBD", date: "Jun 2026", time: "TBD" },
+  { status: "To book", type: "TBD", date: "Jun 2026", time: "TBD" },
+  { status: "Booked", type: "Phone Call", date: "June 12, 2026", time: "9:00 AM" },
+  { status: "To confirm", type: "Zoom Call", date: "June 12, 2026", time: "10:00 AM" },
+  { status: "Confirmed", type: "Phone Call", date: "June 12, 2026", time: "11:00 AM" },
+  { status: "Ready", type: "Zoom Call", date: "June 12, 2026", time: "9:00 AM" },
+  { status: "Ready", type: "Phone Call", date: "June 12, 2026", time: "9:00 AM" },
+  { status: "Late Cancellation", type: "Phone Call", date: "June 12, 2026", time: "TBD" },
+  { status: "Missed Appointment", type: "Phone Call", date: "June 12, 2026", time: "TBD" },
 ];
 
 const futureStages = [
@@ -54,6 +38,7 @@ export default function Appointments() {
   const createMutation = useCreateAppointment();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [overlay, setOverlay] = useState<"zoom" | "phone" | "help" | null>(null);
 
   const [formData, setFormData] = useState({
     reason: "",
@@ -85,6 +70,52 @@ export default function Appointments() {
     });
   };
 
+  const downloadPastSummaryPdf = (title: string, date: Date, doctor: string) => {
+    const lines = [
+      "CareQ Appointment Summary",
+      "",
+      `Appointment: ${title}`,
+      `Date: ${format(date, "MMMM d, yyyy")}`,
+      `Time: ${format(date, "h:mm a")}`,
+      `Physician: ${doctor}`,
+      "Nurse: Anita Cast",
+    ];
+    const escapePdfText = (value: string) =>
+      value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+    const content = lines
+      .map((line, i) => `BT /F1 12 Tf 50 ${760 - i * 20} Td (${escapePdfText(line)}) Tj ET`)
+      .join("\n");
+    const objects = [
+      "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj",
+      "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj",
+      "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj",
+      "4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj",
+      `5 0 obj << /Length ${content.length} >> stream\n${content}\nendstream endobj`,
+    ];
+    let pdf = "%PDF-1.4\n";
+    const offsets: number[] = [0];
+    for (const obj of objects) {
+      offsets.push(pdf.length);
+      pdf += `${obj}\n`;
+    }
+    const xref = pdf.length;
+    pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+    for (let i = 1; i < offsets.length; i++) {
+      pdf += `${offsets[i].toString().padStart(10, "0")} 00000 n \n`;
+    }
+    pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+    const blob = new Blob([pdf], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `appointment-summary-${title.toLowerCase().replace(/\s+/g, "-")}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+
   if (isLoading) return <Layout><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mt-20" /></Layout>;
 
   return (
@@ -97,9 +128,12 @@ export default function Appointments() {
               <Calendar className="w-8 h-8 text-primary" />
               Appointments
             </h1>
-            <p className="text-muted-foreground mt-1">View and manage your upcoming and past appointments</p>
+            <p className="text-muted-foreground mt-1">View and manage your future and past appointments</p>
           </div>
-          
+          <div className="text-sm text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-full flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Last updated: {new Date().toLocaleDateString()}
+          </div>
         </header>
 
         <div>
@@ -163,6 +197,128 @@ export default function Appointments() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          <Dialog open={overlay !== null} onOpenChange={(open) => !open && setOverlay(null)}>
+            <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
+              {overlay === "zoom" && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>Join Your Video Visit</DialogTitle>
+                    <DialogDescription>
+                      Your appointment is ready to begin. Please make sure your camera, microphone, and internet connection are working before joining.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-5 py-2">
+                    <div className="space-y-2">
+                      <p className="font-semibold">Step 1 - Check Your Setup</p>
+                      <p>Make sure:</p>
+                      <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                        <li>Your camera is on</li>
+                        <li>Your microphone is working</li>
+                        <li>Your internet connection is stable</li>
+                        <li>You are in a quiet and private space</li>
+                      </ul>
+                      <p className="text-muted-foreground">You can test your device before joining.</p>
+                      <Button variant="outline">Test Camera &amp; Microphone</Button>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="font-semibold">Step 2 - Join Your Appointment</p>
+                      <p className="text-muted-foreground">When you are ready, click the button below to join the video visit.</p>
+                      <p className="text-muted-foreground">Your care team will admit you when the appointment begins.</p>
+                      <Button className="w-full sm:w-auto">Join Video Visit</Button>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="font-semibold">If You Have Trouble</p>
+                      <p className="text-muted-foreground">If video is not working, you can switch to a phone call instead.</p>
+                      <Button variant="outline" onClick={() => setOverlay("phone")}>Switch to Phone Call</Button>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold">Need Help?</p>
+                      <p className="text-muted-foreground">If you are having trouble joining your visit, please contact the clinic.</p>
+                      <p>(403) XXX-XXXX</p>
+                      <Button variant="outline" onClick={() => setOverlay("help")}>Get Help</Button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {overlay === "phone" && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>Prepare for Your Phone Appointment</DialogTitle>
+                    <DialogDescription>
+                      Your care team will call you at the scheduled time. Please confirm the phone number where you would like to receive the call.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-5 py-2">
+                    <div className="space-y-1">
+                      <p className="font-semibold">Phone number for this appointment</p>
+                      <p>(403) 555-1234</p>
+                      <Button variant="outline">Change Phone Number</Button>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="font-semibold">At the time of your appointment:</p>
+                      <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                        <li>Please keep your phone nearby</li>
+                        <li>Make sure your phone is not on silent</li>
+                        <li>Answer calls from unknown or private numbers</li>
+                      </ul>
+                      <p className="text-muted-foreground">If we cannot reach you, we may attempt to call again.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button onClick={() => setOverlay(null)}>Confirm I'm Ready</Button>
+                      <Button variant="outline" onClick={() => setOverlay("zoom")}>Switch to Video Visit</Button>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold">Need Help?</p>
+                      <p className="text-muted-foreground">If you are having trouble with your appointment, please contact the clinic.</p>
+                      <p>(403) XXX-XXXX</p>
+                      <Button variant="outline" onClick={() => setOverlay("help")}>Get Help</Button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {overlay === "help" && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>Appointment Help</DialogTitle>
+                    <DialogDescription>
+                      If you are having trouble joining your appointment, we are here to help.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-5 py-2">
+                    <div className="space-y-2">
+                      <p className="font-semibold">I can&apos;t join my video visit</p>
+                      <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                        <li>Check your internet connection</li>
+                        <li>Make sure your camera and microphone are allowed</li>
+                        <li>Try refreshing the page or re-joining</li>
+                      </ul>
+                      <Button variant="outline" onClick={() => setOverlay("zoom")}>Join Video Visit Again</Button>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="font-semibold">I need to switch to a phone call</p>
+                      <Button variant="outline" onClick={() => setOverlay("phone")}>Switch to Phone Call</Button>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="font-semibold">I missed the call</p>
+                      <p className="text-muted-foreground">If you missed the call, please contact the clinic to reschedule.</p>
+                      <Button variant="outline">Reschedule Appointment</Button>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold">Contact the Clinic</p>
+                      <p>(403) XXX-XXXX</p>
+                      <p className="text-muted-foreground">Clinic staff can help you join your visit or reschedule if needed.</p>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setOverlay(null)}>Return to Appointment</Button>
+                    </DialogFooter>
+                  </div>
+                </>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Tabs defaultValue="future" className="w-full">
@@ -181,144 +337,117 @@ export default function Appointments() {
               {sixMonthStatuses.map((item, idx) => (
                 <Card key={idx} className="border-none shadow-md bg-white rounded-xl overflow-hidden">
                   <CardContent className="p-0">
-                    <div className="bg-muted/30 px-6 py-3 border-b border-border/40 flex items-center justify-between">
+                    <div className={cn(
+                      "px-6 py-3 border-b border-border/40 flex items-center justify-between",
+                      item.status === "To book" || item.status === "To confirm" ? "bg-muted/40" :
+                      item.status === "Booked" ? "bg-accent" :
+                      item.status === "Confirmed" ? "bg-blue-50" :
+                      item.status === "Ready" ? "bg-emerald-50" :
+                      item.status === "Late Cancellation" ? "bg-yellow-50" :
+                      "bg-red-50"
+                    )}>
                       <div>
                         <h3 className="text-sm font-bold text-foreground">6 Month Appointment</h3>
-                        <p className="text-[10px] text-muted-foreground mt-1">{item.date}</p>
+                        <p className="text-sm text-muted-foreground mt-1">Jun 2026</p>
                       </div>
-                      <Badge variant="outline" className={cn(
-                        "text-[10px] h-5 border-none shrink-0 font-bold uppercase tracking-wider",
-                        item.status === 'Ready' ? "bg-emerald-100 text-emerald-700" :
-                        "bg-muted/50 text-muted-foreground"
+                      <Badge className={cn(
+                        "text-sm border-none shrink-0 font-bold",
+                        item.status === "To book" || item.status === "To confirm" ? "bg-black text-white" :
+                        item.status === "Booked" ? "bg-primary text-white" :
+                        item.status === "Confirmed" ? "bg-primary text-white" :
+                        item.status === "Ready" ? "bg-emerald-700 text-white" :
+                        item.status === "Late Cancellation" ? "bg-yellow-500 text-black" :
+                        "bg-red-700 text-white"
                       )}>
                         {item.status}
                       </Badge>
                     </div>
 
-                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                      {/* Left Side - Care Team & Details */}
-                      <div className="md:col-span-2 space-y-4">
-                        <div>
-                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Care Team</h4>
-                          <div className="flex gap-4">
-                            {item.status === 'To book' ? (
-                              <>
-                                <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 rounded-lg bg-muted"></div>
-                                  <div>
-                                    <p className="font-semibold text-foreground text-sm">TBD</p>
-                                    <p className="text-xs text-muted-foreground">Physician</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 rounded-lg bg-muted"></div>
-                                  <div>
-                                    <p className="font-semibold text-foreground text-sm">TBD</p>
-                                    <p className="text-xs text-muted-foreground">Nurse</p>
-                                  </div>
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div className="flex items-center gap-3">
-                                  <Avatar className="w-12 h-12 rounded-lg border border-border">
-                                    <AvatarImage src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=100&h=100" />
-                                    <AvatarFallback className="rounded-lg">Dr</AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                    <p className="font-semibold text-foreground text-sm">Dr. Munib Ali</p>
-                                    <p className="text-xs text-muted-foreground">Physician</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <Avatar className="w-12 h-12 rounded-lg border border-border">
-                                    <AvatarImage src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100&h=100" />
-                                    <AvatarFallback className="rounded-lg">RN</AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                    <p className="font-semibold text-foreground text-sm">Sarah Jenkins</p>
-                                    <p className="text-xs text-muted-foreground">Nurse</p>
-                                  </div>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {item.status !== 'To book' && (
-                          <div className="space-y-2 text-sm">
-                            <div className="flex items-center gap-3 text-foreground">
-                              <Calendar className="w-4 h-4 text-primary" />
-                              <span>{item.date}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border/50 bg-white">
+                      <div className="p-5 space-y-4">
+                        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Details</h4>
+                        {item.status !== "To book" && item.status !== "Overdue" && (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="w-12 h-12 rounded-lg border border-border">
+                                <AvatarImage src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=100&h=100" />
+                                <AvatarFallback className="rounded-lg">Dr</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-semibold text-foreground text-sm">Dr. Justin Case</p>
+                                <p className="text-sm text-muted-foreground">Physician</p>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-3 text-foreground">
-                              <Clock className="w-4 h-4 text-primary" />
-                              <span>{item.time}</span>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="w-12 h-12 rounded-lg border border-border">
+                                <AvatarImage src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100&h=100" />
+                                <AvatarFallback className="rounded-lg">RN</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-semibold text-foreground text-sm">Anita Cast</p>
+                                <p className="text-sm text-muted-foreground">Nurse</p>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-3 text-foreground">
-                              {item.type === 'Zoom Call' ? <VideoIcon className="w-4 h-4 text-primary" /> : <Phone className="w-4 h-4 text-primary" />}
-                              <span>{item.type}</span>
-                            </div>
-                          </div>
+                          </>
                         )}
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /><span>{item.status === "To book" || item.status === "Overdue" ? "TBD" : item.date}</span></div>
+                          <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /><span>{item.status === "To book" || item.status === "Overdue" ? "TBD" : item.time}</span></div>
+                          <div className="flex items-center gap-2">{item.type === "Zoom Call" ? <VideoIcon className="w-4 h-4 text-primary" /> : <Phone className="w-4 h-4 text-primary" />}<span>{item.status === "To book" || item.status === "Overdue" ? "TBD" : item.type}</span></div>
+                        </div>
                       </div>
 
-                      {/* Right Side - Actions & Tracking */}
-                      <div className="flex flex-col gap-3 border-t md:border-t-0 md:border-l border-border/50 pt-6 md:pt-0 md:pl-8">
-                        {item.status === 'To book' && (
-                          <>
-                            <Button className="w-full bg-primary text-white">Book Appointment</Button>
-                            {(item.lateCancelDate || item.missedDate) && (
-                              <div className="mt-2 space-y-1">
-                                {item.lateCancelDate && (
-                                  <Badge className="text-[10px] bg-yellow-100 text-yellow-800 w-full justify-start">
-                                    Late Cancellation · {item.lateCancelDate}
-                                  </Badge>
-                                )}
-                                {item.missedDate && (
-                                  <Badge className="text-[10px] bg-red-100 text-red-800 w-full justify-start">
-                                    Missed Appointment · {item.missedDate}
-                                  </Badge>
-                                )}
-                              </div>
-                            )}
-                          </>
-                        )}
-                        {item.status === 'Booked' && (
-                          <>
-                            {item.type === 'Zoom Call' ? (
-                              <Button variant="outline" className="w-full">Switch to Phone</Button>
-                            ) : (
-                              <Button variant="outline" className="w-full">Switch to Zoom</Button>
-                            )}
-                            <Button variant="outline" className="w-full">Reschedule</Button>
-                            <Button variant="outline" className="w-full">Cancel</Button>
-                          </>
-                        )}
-                        {item.status === 'To confirm' && (
-                          <>
-                            <Button className="w-full bg-primary text-white">Confirm</Button>
-                            <Button variant="outline" className="w-full">Reschedule</Button>
-                            <Button variant="outline" className="w-full">Cancel</Button>
-                          </>
-                        )}
-                        {item.status === 'Confirmed' && (
-                          <>
-                            <Button variant="outline" className="w-full">Reschedule</Button>
-                            <Button variant="outline" className="w-full">Cancel</Button>
-                          </>
-                        )}
+                      <div className="p-5">
+                        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">History</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                            <span className="text-sm text-muted-foreground">Late cancellation (Jun 10, 2025)</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                            <span className="text-sm text-muted-foreground">Missed appointment (Jun 05, 2025)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-5 flex flex-col gap-3 items-center justify-start">
+                        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide w-full max-w-[240px]">Actions</h4>
+                        {item.status === 'To book' && <Button className="w-full max-w-[240px] bg-black text-white"><Calendar className="w-4 h-4 mr-2" />Book Appointment</Button>}
+                        {item.status === 'Booked' && (<><Button variant="outline" className="w-full max-w-[240px]"><VideoIcon className="w-4 h-4 mr-2" />Switch to Zoom</Button><Button variant="outline" className="w-full max-w-[240px]"><Clock className="w-4 h-4 mr-2" />Reschedule</Button><Button className="w-full max-w-[240px] bg-red-100 text-red-700 border border-red-200 hover:bg-red-100"><X className="w-4 h-4 mr-2" />Cancel</Button></>)}
+                        {item.status === 'To confirm' && (<><Button className="w-full max-w-[240px] bg-black text-white"><CheckCircle2 className="w-4 h-4 mr-2" />Confirm Appointment</Button><Button variant="outline" className="w-full max-w-[240px]"><Phone className="w-4 h-4 mr-2" />Switch to Phone</Button><Button variant="outline" className="w-full max-w-[240px]"><Clock className="w-4 h-4 mr-2" />Reschedule</Button><Button className="w-full max-w-[240px] bg-red-100 text-red-700 border border-red-200 hover:bg-red-100"><X className="w-4 h-4 mr-2" />Cancel</Button></>)}
+                        {item.status === 'Confirmed' && (<><Button variant="outline" className="w-full max-w-[240px]"><VideoIcon className="w-4 h-4 mr-2" />Switch to Zoom</Button><Button variant="outline" className="w-full max-w-[240px]"><Clock className="w-4 h-4 mr-2" />Reschedule</Button><Button className="w-full max-w-[240px] bg-red-100 text-red-700 border border-red-200 hover:bg-red-100"><X className="w-4 h-4 mr-2" />Cancel</Button></>)}
                         {item.status === 'Ready' && item.type === 'Zoom Call' && (
-                          <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                            <VideoIcon className="w-4 h-4 mr-2" /> Join Now
-                          </Button>
+                          <>
+                            <Button className="w-full max-w-[240px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setOverlay("zoom")}><VideoIcon className="w-4 h-4 mr-2" />Join Now</Button>
+                            <Button variant="outline" className="w-full max-w-[240px]"><Phone className="w-4 h-4 mr-2" />Switch to Phone</Button>
+                            <Button className="w-full max-w-[240px] bg-red-100 text-red-700 border border-red-200 hover:bg-red-100" onClick={() => setOverlay("help")}><LifeBuoy className="w-4 h-4 mr-2" />I Need Help</Button>
+                          </>
                         )}
                         {item.status === 'Ready' && item.type === 'Phone Call' && (
-                          <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
-                            <p className="text-[10px] font-semibold text-muted-foreground mb-2">INCOMING CALL</p>
-                            <p className="text-sm font-medium text-foreground">You can expect a phone call to (604) 555-0142</p>
-                            <p className="text-[10px] text-muted-foreground mt-1">between 9:00 AM - 9:15 AM</p>
-                          </div>
+                          <>
+                            <Button className="w-full max-w-[240px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setOverlay("phone")}><Phone className="w-4 h-4 mr-2" />Ready for Call</Button>
+                            <Button variant="outline" className="w-full max-w-[240px]"><VideoIcon className="w-4 h-4 mr-2" />Switch to Zoom</Button>
+                            <Button className="w-full max-w-[240px] bg-red-100 text-red-700 border border-red-200 hover:bg-red-100" onClick={() => setOverlay("help")}><LifeBuoy className="w-4 h-4 mr-2" />I Need Help</Button>
+                          </>
+                        )}
+                        {item.status === 'Overdue' && (
+                          <>
+                            <p className="text-sm text-muted-foreground w-full max-w-[240px]">This appointment is overdue. Please book an appointment to continue your care journey.</p>
+                            <Button className="w-full max-w-[240px] bg-red-600 hover:bg-red-700 text-white"><Calendar className="w-4 h-4 mr-2" />Book Appointment</Button>
+                          </>
+                        )}
+                        {item.status === 'Late Cancellation' && (
+                          <>
+                            <p className="text-sm text-muted-foreground w-full max-w-[240px]">This appointment was cancelled late. Please book a new appointment to continue your care journey.</p>
+                            <Button className="w-full max-w-[240px] bg-yellow-500 hover:bg-yellow-500 text-black border border-yellow-600"><Calendar className="w-4 h-4 mr-2" />Book New Appointment</Button>
+                          </>
+                        )}
+                        {item.status === 'Missed Appointment' && (
+                          <>
+                            <p className="text-sm text-muted-foreground w-full max-w-[240px]">This appointment was missed. Please book an appointment to continue your care journey.</p>
+                            <Button className="w-full max-w-[240px] bg-red-600 hover:bg-red-700 text-white"><Calendar className="w-4 h-4 mr-2" />Book New Appointment</Button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -329,13 +458,13 @@ export default function Appointments() {
               {/* Future Stages - Planned Appointments */}
               <div className="space-y-3 mt-8">
                 {futureStages.map((stage, index) => (
-                  <Card key={index} className="border border-border/60 shadow-sm bg-white/80 rounded-xl">
+                  <Card key={index} className="border border-border/60 shadow-sm bg-white rounded-xl">
                     <CardContent className="p-4 flex items-center justify-between">
                       <div>
                         <h3 className="font-semibold text-foreground text-sm">{stage.name}</h3>
                         <p className="text-[10px] text-muted-foreground mt-1">{stage.date}</p>
                       </div>
-                      <Badge variant="outline" className="text-[10px] h-5 bg-muted/50 text-muted-foreground border-border shrink-0 font-bold uppercase tracking-wider">
+                      <Badge className="text-sm border-none shrink-0 font-bold bg-neutral-600 text-white">
                         {stage.status}
                       </Badge>
                     </CardContent>
@@ -346,143 +475,118 @@ export default function Appointments() {
           </TabsContent>
 
           <TabsContent value="past" className="space-y-6 animate-in fade-in-50 duration-300">
-            {past.length > 0 && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Late Cancellations</p>
-                  <p className="text-2xl font-bold text-foreground">{appointmentTracking.lateCancellations}</p>
-                </div>
-                <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Missed Appointments</p>
-                  <p className="text-2xl font-bold text-foreground">{appointmentTracking.missedAppointments}</p>
-                </div>
-              </div>
-            )}
-             <div className="grid gap-3">
+            <div className="grid gap-3">
               {past.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(appt => {
-                const carePlan = carePlanByAppointment[appt.id] || {
-                  assessment: `${appt.title} completed with ${appt.doctorName}. Patient progress reviewed and care plan updated accordingly.`,
-                  carePlan: [
-                    "Continue current treatment plan and medications",
-                    "Monitor symptoms and report any changes",
-                    "Follow up at next scheduled appointment",
-                  ],
-                };
                 return (
-                <Collapsible key={appt.id}>
-                  <Card className="border-none shadow-md bg-white rounded-xl overflow-hidden" data-testid={`card-past-appointment-${appt.id}`}>
-                    <CardContent className="p-0">
-
-                      <div className="bg-muted/30 px-6 py-3 border-b border-border/40 flex items-center justify-between">
-                        <div>
-                          <h3 className="text-sm font-bold text-foreground">{appt.title}</h3>
-                          <p className="text-[10px] text-muted-foreground mt-1">{format(new Date(appt.date), "MMM yyyy")}</p>
+                  <Collapsible key={appt.id}>
+                    <Card className="border border-border/60 shadow-sm bg-white rounded-xl overflow-hidden" data-testid={`card-past-appointment-${appt.id}`}>
+                      <CardContent className="p-0">
+                        <div className="bg-muted/30 px-6 py-3 border-b border-border/40 flex items-center justify-between">
+                          <div>
+                            <h3 className="text-sm font-bold text-foreground">{appt.title}</h3>
+                            <p className="text-sm text-muted-foreground mt-1">{format(new Date(appt.date), "MMM yyyy")}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge className="text-sm border-none shrink-0 font-bold bg-emerald-100 text-emerald-700">
+                              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                              Completed
+                            </Badge>
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm" className="text-sm gap-1.5 group">
+                                <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
+                              </Button>
+                            </CollapsibleTrigger>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {appt.id === 1 && (
-                            <>
-                              <Badge className="text-[10px] bg-yellow-100 text-yellow-800 border-none">
-                                Late Cancellation · June 10, 2025
-                              </Badge>
-                              <Badge className="text-[10px] bg-red-100 text-red-800 border-none">
-                                Missed Appointment · June 5, 2025
-                              </Badge>
-                            </>
-                          )}
-                          <Badge className="bg-emerald-100 text-emerald-700 border-none">
-                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Completed
-                          </Badge>
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-sm gap-1.5 group">
-                              <ChevronDown className="w-3.5 h-3.5 transition-transform group-data-[state=open]:rotate-180" />
-                            </Button>
-                          </CollapsibleTrigger>
-                        </div>
-                      </div>
 
-                      <CollapsibleContent>
-                        <div className="px-6 pb-6 space-y-6 border-t border-border/40 pt-6">
-
-                        <div>
-                          <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">Care Team</h3>
-                          <div className="flex gap-4">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="w-12 h-12 rounded-lg border border-border">
-                                <AvatarImage src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=100&h=100" />
-                                <AvatarFallback className="rounded-lg">Dr</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-semibold text-foreground text-sm">Dr. {appt.doctorName.replace(/^Dr\.\s*/i, '')}</p>
-                                <p className="text-xs text-muted-foreground">Physician</p>
+                        <CollapsibleContent>
+                          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border/50 bg-white">
+                            <div className="p-5 space-y-4">
+                              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Details</h4>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="w-12 h-12 rounded-lg border border-border">
+                                  <AvatarImage src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=100&h=100" />
+                                  <AvatarFallback className="rounded-lg">Dr</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-semibold text-foreground text-sm">Dr. Justin Case</p>
+                                  <p className="text-sm text-muted-foreground">Physician</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="w-12 h-12 rounded-lg border border-border">
+                                  <AvatarImage src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100&h=100" />
+                                  <AvatarFallback className="rounded-lg">RN</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-semibold text-foreground text-sm">Anita Cast</p>
+                                  <p className="text-sm text-muted-foreground">Nurse</p>
+                                </div>
+                              </div>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /><span>{format(new Date(appt.date), "MMMM d, yyyy")}</span></div>
+                                <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /><span>{format(new Date(appt.date), "h:mm a")}</span></div>
+                                <div className="flex items-center gap-2">{appt.type === 'Video Call' ? <VideoIcon className="w-4 h-4 text-primary" /> : appt.type === 'Phone' ? <Phone className="w-4 h-4 text-primary" /> : <MapPin className="w-4 h-4 text-primary" />}<span>{appt.type === 'Video Call' ? 'Zoom Call' : appt.type === 'Phone' ? 'Phone Call' : appt.location}</span></div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <Avatar className="w-12 h-12 rounded-lg border border-border">
-                                <AvatarImage src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100&h=100" />
-                                <AvatarFallback className="rounded-lg">RN</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-semibold text-foreground text-sm">Sarah Jenkins</p>
-                                <p className="text-xs text-muted-foreground">Nurse</p>
+                            <div className="p-5 space-y-3">
+                              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">History</h4>
+                              <div className="flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                                <span className="text-sm text-muted-foreground">Late cancellation (Jun 10, 2025)</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                                <span className="text-sm text-muted-foreground">Missed appointment (Jun 05, 2025)</span>
+                              </div>
+                            </div>
+                            <div className="p-5 flex flex-col gap-3 items-center justify-start">
+                              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide w-full max-w-[240px]">Actions</h4>
+                              <Button variant="outline" className="w-full max-w-[240px]" onClick={() => downloadPastSummaryPdf(appt.title, new Date(appt.date), "Dr. Justin Case")}><Download className="w-4 h-4 mr-2" />Download PDF</Button>
+                              <Button variant="outline" className="w-full max-w-[240px]" onClick={() => (window.location.href = "/resources")}><MessageSquareText className="w-4 h-4 mr-2" />View E-advice</Button>
+                            </div>
+                          </div>
+
+                          <div className="px-5 pb-5 bg-white">
+                            <div className="grid grid-cols-1 gap-4 mt-4">
+                              <div className="bg-white p-5 rounded-lg border border-border">
+                                <h4 className="font-semibold text-base text-foreground mb-3">Current Condition</h4>
+                                <h5 className="text-xs text-primary uppercase tracking-wide mb-3 origin-left scale-90">Right Knee Osteoarthritis</h5>
+                                <p className="text-sm font-medium text-foreground leading-relaxed">
+                                  You have osteoarthritis in your right knee. This means that the cartilage in the knee joint has gradually worn down over time, which can cause the bones in the joint to rub against each other. This often leads to symptoms such as pain, stiffness, swelling, and difficulty with activities like walking, standing for long periods, or climbing stairs.
+                                </p>
+                              </div>
+                              <div className="bg-white p-5 rounded-lg border border-border">
+                                <h4 className="font-semibold text-base text-foreground mb-4">Current Plan</h4>
+                                <div className="space-y-2">
+                                  <div className="flex items-start gap-3 p-3 bg-muted/20 rounded-lg border border-border/50">
+                                    <div className="p-2.5 bg-primary/10 text-primary rounded-lg shrink-0"><Pill className="w-6 h-6" /></div>
+                                    <div><p className="text-xs text-primary uppercase tracking-wide mb-1 origin-left scale-90">Medication</p><p className="text-sm font-medium">Daily Naproxen (500mg) for joint inflammation</p></div>
+                                  </div>
+                                  <div className="flex items-start gap-3 p-3 bg-muted/20 rounded-lg border border-border/50">
+                                    <div className="p-2.5 bg-primary/10 text-primary rounded-lg shrink-0"><Dumbbell className="w-6 h-6" /></div>
+                                    <div><p className="text-xs text-primary uppercase tracking-wide mb-1 origin-left scale-90">Lifestyle</p><p className="text-sm font-medium">Pre-habilitation strengthening exercises</p></div>
+                                  </div>
+                                  <div className="flex items-start gap-3 p-3 bg-muted/20 rounded-lg border border-border/50">
+                                    <div className="p-2.5 bg-primary/10 text-primary rounded-lg shrink-0"><Activity className="w-6 h-6" /></div>
+                                    <div><p className="text-xs text-primary uppercase tracking-wide mb-1 origin-left scale-90">Lifestyle</p><p className="text-sm font-medium">Mobility and low-impact conditioning</p></div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-3 text-foreground">
-                            <div className="w-8 flex justify-center">
-                              <Calendar className="w-5 h-5 text-primary" />
-                            </div>
-                            <span className="font-medium">
-                              {format(new Date(appt.date), "MMMM do, yyyy")}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 text-foreground">
-                            <div className="w-8 flex justify-center">
-                              <Clock className="w-5 h-5 text-primary" />
-                            </div>
-                            <span className="font-medium">
-                              {format(new Date(appt.date), "h:mm a")}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 text-foreground">
-                            <div className="w-8 flex justify-center">
-                              {appt.type === 'Video Call' ? <VideoIcon className="w-5 h-5 text-primary" /> : appt.type === 'Phone' ? <Phone className="w-5 h-5 text-primary" /> : <MapPin className="w-5 h-5 text-primary" />}
-                            </div>
-                            <span className="font-medium">
-                              {appt.type === 'Video Call' ? 'Zoom Call' : appt.type === 'Phone' ? 'Phone Call' : appt.location}
-                            </span>
-                          </div>
-                        </div>
-                          <div className="bg-muted/30 p-5 rounded-lg border border-border/50">
-                            <h4 className="font-semibold text-base text-foreground mb-3">Assessment</h4>
-                            <p className="text-sm text-foreground/80 leading-relaxed">
-                              {carePlan.assessment}
-                            </p>
-                          </div>
-                          <div className="bg-muted/30 p-5 rounded-lg border border-border/50">
-                            <h4 className="font-semibold text-base text-foreground mb-3">Care Plan</h4>
-                            <ul className="text-sm text-foreground/80 space-y-2 list-disc list-inside">
-                              {carePlan.carePlan.map((item, i) => (
-                                <li key={i}>{item}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </CollapsibleContent>
-
-                    </CardContent>
-                  </Card>
-                </Collapsible>
+                        </CollapsibleContent>
+                      </CardContent>
+                    </Card>
+                  </Collapsible>
                 );
               })}
               {past.length === 0 && (
-                 <div className="text-center py-12 text-muted-foreground">
-                    No past appointments found.
-                 </div>
+                <div className="text-center py-12 text-muted-foreground">
+                  No past appointments found.
+                </div>
               )}
-             </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

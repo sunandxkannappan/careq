@@ -30,7 +30,7 @@ export function useUpdateUser() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] });
-      toast({ title: "Profile updated", description: "Your changes have been saved." });
+      toast({ title: "Account updated", description: "Your changes have been saved." });
     }
   });
 }

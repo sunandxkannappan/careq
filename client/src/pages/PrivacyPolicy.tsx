@@ -50,7 +50,7 @@ export default function PrivacyPolicy() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-white font-bold font-display text-lg shadow-lg shadow-primary/30 shrink-0">
+            <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center text-white font-bold font-display text-base shrink-0">
               Q
             </div>
             <span className="font-display font-bold text-xl text-foreground tracking-tight">CareQ</span>
@@ -62,8 +62,8 @@ export default function PrivacyPolicy() {
         </div>
 
         {/* Intro */}
-        <div className="bg-blue-50 rounded-xl border border-blue-100 p-5 mb-8">
-          <p className="text-sm text-blue-700 leading-relaxed">
+        <div className="bg-accent rounded-xl border border-secondary/30 p-5 mb-8">
+          <p className="text-sm text-primary leading-relaxed">
             CareQ is committed to protecting the privacy of your personal health information. This policy describes how we collect, use, and disclose your information in accordance with Alberta's{" "}
             <strong>Health Information Act (HIA)</strong> and the{" "}
             <strong>Personal Information Protection Act (PIPA)</strong>.

@@ -1,124 +1,139 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Eye, EyeOff, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ShieldCheck } from "lucide-react";
+
+const linkedAccount = {
+  firstName: "Sunand",
+  lastName: "Kannappan",
+  dob: "1990-03-12",
+  phn: "9876 543 210",
+  referralPhysician: "Dr. Justin Case",
+  referralDate: "November 12, 2025",
+};
 
 export default function Login() {
   const [, navigate] = useLocation();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [mode, setMode] = useState<"patient" | "staff">("patient");
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [contact, setContact] = useState("");
+  const [otp, setOtp] = useState("");
+  const [dob, setDob] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const contactLabel = useMemo(() => (mode === "patient" ? "Email or phone" : "Staff email or phone"), [mode]);
+
+  const toPortal = () => {
+    localStorage.setItem("careq_auth", "true");
+    localStorage.setItem("careq_onboarding", "complete");
+    navigate("/referral");
+  };
+
+  const next = () => {
     setError("");
-
-    if (!email || !password) {
-      setError("Please enter your email and password.");
-      return;
-    }
-
-    setLoading(true);
-
-    // Simulate auth — accept any credentials
-    setTimeout(() => {
-      localStorage.setItem("careq_auth", "true");
-      const onboarding = localStorage.getItem("careq_onboarding");
-      if (!onboarding || onboarding === "consent") {
-        navigate("/consent");
-      } else if (onboarding === "intake") {
-        navigate("/intake");
-      } else {
-        navigate("/referral");
-      }
-      setLoading(false);
-    }, 600);
-  }
+    if (step === 1 && !contact.trim()) return setError("Enter email or phone.");
+    if (step === 2 && otp.length < 6) return setError("Enter the 6-digit OTP.");
+    if (step === 3 && !dob) return setError("Enter your date of birth.");
+    setStep((Math.min(4, step + 1) as 1 | 2 | 3 | 4));
+  };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-[400px] animate-enter">
+    <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+      <Link href="/referral" className="fixed top-4 right-4 text-sm text-primary font-medium hover:underline">Skip to portal</Link>
+      <div className="w-full max-w-[560px]">
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-extrabold text-2xl">Q</div>
+          <h1 className="font-display font-bold text-2xl mt-2">CareQ</h1>
+          <p className="text-sm text-muted-foreground">Patient Portal</p>
+        </div>
 
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white font-bold font-display text-2xl shadow-lg shadow-primary/30 mb-3">
-            Q
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
+          <Tabs value={mode} onValueChange={(v) => { setMode(v as "patient" | "staff"); setStep(1); }}>
+            <TabsList className="grid grid-cols-2 w-full max-w-sm bg-muted/50 p-1 rounded-lg">
+              <TabsTrigger value="patient" className="data-[state=active]:bg-white">Patient login</TabsTrigger>
+              <TabsTrigger value="staff" className="data-[state=active]:bg-white">Staff login</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className="h-full bg-primary transition-all" style={{ width: `${(step / 4) * 100}%` }} />
           </div>
-          <h1 className="font-display font-bold text-2xl text-foreground tracking-tight">CareQ</h1>
-          <p className="text-sm text-muted-foreground mt-1">Patient Portal</p>
-        </div>
+          <p className="text-xs text-muted-foreground">Step {step} of 4</p>
 
-        {/* Card */}
-        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-          <h2 className="font-display font-bold text-xl text-foreground tracking-tight mb-1">Welcome back</h2>
-          <p className="text-sm text-muted-foreground mb-6">Sign in to access your care portal.</p>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <button
-                  type="button"
-                  className="text-xs text-primary hover:underline"
-                  onClick={() => {}}
-                >
-                  Forgot password?
-                </button>
+          {step === 1 && (
+            <div className="space-y-3">
+              <h2 className="font-display font-bold text-xl">Sign in with OTP</h2>
+              <p className="text-sm text-muted-foreground">Enter your {mode === "patient" ? "patient" : "staff"} email or phone to receive a one-time code.</p>
+              <div>
+                <Label>{contactLabel}</Label>
+                <Input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="you@example.com or (403) 555-1234" />
               </div>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+              <Button className="w-full" onClick={next}>Send OTP</Button>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-3">
+              <h2 className="font-display font-bold text-xl">Enter OTP</h2>
+              <p className="text-sm text-muted-foreground">Enter the 6-digit code sent to {contact}.</p>
+              <div>
+                <Label>One-time passcode</Label>
+                <Input value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="123456" />
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="w-full">Resend OTP</Button>
+                <Button className="w-full" onClick={next}>Verify OTP</Button>
               </div>
             </div>
+          )}
 
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
+          {step === 3 && (
+            <div className="space-y-3">
+              <h2 className="font-display font-bold text-xl">Identity verification</h2>
+              <p className="text-sm text-muted-foreground">Confirm your date of birth to match your patient record.</p>
+              <div>
+                <Label>Date of birth</Label>
+                <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+              </div>
+              <Button className="w-full" onClick={next}>Verify identity</Button>
+            </div>
+          )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              <LogIn className="w-4 h-4" />
-              {loading ? "Signing in…" : "Sign in"}
-            </Button>
-          </form>
+          {step === 4 && (
+            <div className="space-y-4">
+              <div className="flex items-start gap-2">
+                <ShieldCheck className="w-5 h-5 text-primary mt-0.5" />
+                <div>
+                  <h2 className="font-display font-bold text-xl">Account linked</h2>
+                  <p className="text-sm text-muted-foreground">Your account has been matched to the referral record.</p>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/20 p-3 text-sm space-y-1">
+                <p><span className="font-semibold">Name:</span> {linkedAccount.firstName} {linkedAccount.lastName}</p>
+                <p><span className="font-semibold">DOB:</span> {linkedAccount.dob}</p>
+                <p><span className="font-semibold">PHN:</span> {linkedAccount.phn}</p>
+                <p><span className="font-semibold">Referral physician:</span> {linkedAccount.referralPhysician}</p>
+                <p><span className="font-semibold">Date of referral:</span> {linkedAccount.referralDate}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="w-full" onClick={() => navigate("/onboarding/forms")}>View next forms</Button>
+                <Button className="w-full" onClick={toPortal}>Enter portal</Button>
+              </div>
+            </div>
+          )}
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-5">
-          Don't have an account?{" "}
-          <Link href="/register" className="text-primary font-medium hover:underline">
-            Create account
+        <div className="mt-6 pt-5 border-t border-border text-center">
+          <p className="text-sm text-primary font-medium mb-3">New to CareQ?</p>
+          <Link href="/register">
+            <Button variant="outline" className="px-6">Register now</Button>
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   );

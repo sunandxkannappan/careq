@@ -1,18 +1,10 @@
 import { Layout } from "@/components/Layout";
-import { useUser, useWaitlist, useAppointments, useTasks } from "@/hooks/use-data";
+import { useUser, useWaitlist, useAppointments, useTasks, useMyResults } from "@/hooks/use-data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
-import { 
-  ArrowRight, 
-  Calendar, 
-  CheckCircle2, 
-  Clock, 
-  Activity,
-  AlertCircle
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, ArrowRight, ClipboardList, BookOpen, Hourglass, ListChecks } from "lucide-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 
@@ -21,147 +13,174 @@ export default function Dashboard() {
   const { data: waitlist } = useWaitlist();
   const { data: appointments } = useAppointments();
   const { data: tasks } = useTasks();
+  const { data: results } = useMyResults();
 
-  const nextAppt = appointments?.find(a => a.status === 'Scheduled');
-  const pendingTasks = tasks?.filter(t => t.status === 'Pending') || [];
-  const progress = waitlist ? Math.round((waitlist.currentStage / waitlist.totalStages!) * 100) : 0;
-
-  // Greeting based on time of day
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const nextAppt = appointments?.find((a) => a.status === "Scheduled") || null;
+  const pendingTasks = (tasks || []).filter((t) => t.status === "Pending");
+  const recentResults = (results || [])
+    .filter((r) => r.category === "Labs" || r.category === "Imaging" || r.type === "Requisition")
+    .slice()
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 4);
+  const resourceItems = [
+    { id: "ahkc", title: "AHKC Welcome Package", subtitle: "Joint assessment and surgical consult overview" },
+    { id: "careq", title: "CareQ Welcome Package", subtitle: "Portal guide for tasks, appointments, and updates" },
+  ];
+  const monthsWaited = 6;
+  const consultEstimateLow = 16;
+  const consultEstimateHigh = 18;
+  const consultEstimateMid = Math.round((consultEstimateLow + consultEstimateHigh) / 2);
+  const waitProgress = Math.min(100, Math.round((monthsWaited / consultEstimateMid) * 100));
 
   return (
     <Layout>
-      <header className="mb-10">
-        <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
-          {greeting}, {user?.firstName}
-        </h1>
-        <p className="text-muted-foreground text-lg">Here's what's happening with your care today.</p>
-      </header>
+      <div className="max-w-6xl mx-auto space-y-6">
+        <header className="pb-2 border-b border-border/40">
+          <h1 className="font-display text-3xl font-bold text-primary">Welcome, {user?.firstName}</h1>
+          <p className="text-muted-foreground mt-1">Your care journey snapshot in one view.</p>
+        </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {/* Waitlist Card */}
-        <Card className="col-span-1 md:col-span-2 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground border-none shadow-xl shadow-primary/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-          <CardHeader className="pb-2 relative z-10">
-            <CardTitle className="text-lg font-medium text-primary-foreground/90">Current Waitlist Status</CardTitle>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="flex flex-col sm:flex-row items-center gap-0">
-              <div className="flex-1 w-full space-y-4 pr-0 sm:pr-6 flex flex-col justify-center">
-                <div className="text-center sm:text-left">
-                  <h3 className="text-2xl font-bold mb-1">{waitlist?.stageName}</h3>
-                  <p className="text-primary-foreground/80 text-sm">Step {waitlist?.currentStage} of {waitlist?.totalStages}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-medium text-primary-foreground/70 uppercase tracking-wider">
-                    <span>Progress</span>
-                    <span>{progress}%</span>
-                  </div>
-                  <Progress value={progress} className="h-2.5 bg-black/20" indicatorClassName="bg-white" />
-                </div>
-                <Link href="/status" className="block">
-                  <Button variant="secondary" className="w-full bg-white text-primary border-none shadow-lg shadow-black/10" asChild>
-                    <span>View Detailed Status</span>
-                  </Button>
-                </Link>
-              </div>
-              <div className="hidden sm:block w-px self-stretch bg-white/20 my-1" />
-              <div className="block sm:hidden h-px w-full bg-white/20 my-4" />
-              <div className="flex-1 w-full flex flex-col items-center justify-center pl-0 sm:pl-6 py-4">
-                <p className="text-xs font-semibold text-primary-foreground/60 uppercase tracking-widest mb-2">Wait Time to Consult</p>
-                <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-5xl font-bold text-white leading-none">~20</span>
-                  <span className="text-lg font-medium text-primary-foreground/70">months</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Next Appointment Card */}
-        <Card className="bg-card shadow-lg shadow-black/5 hover:shadow-xl transition-shadow duration-300 border-border/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-display text-foreground flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              Next Appointment
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {nextAppt ? (
-              <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-muted/40 border border-border/50">
-                  <p className="font-bold text-lg text-primary mb-1">
-                    {format(new Date(nextAppt.date), "MMMM d, h:mm a")}
-                  </p>
-                  <p className="font-medium text-foreground">{nextAppt.title}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{nextAppt.doctorName}</p>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-                  Confirmed
-                </div>
-                <Link href="/appointments" className="block mt-2">
-                  <Button variant="outline" className="w-full" asChild>
-                    <span>View All Appointments</span>
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">No upcoming appointments</p>
-                <Link href="/appointments">
-                   <Button asChild><span>Schedule Now</span></Button>
-                </Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Tasks Section */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold font-display">Priority Tasks</h2>
-            <Link href="/tasks" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
-              View All <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-          
-          <div className="space-y-3">
-            {pendingTasks.length > 0 ? (
-              pendingTasks.slice(0, 3).map((task) => (
-                <div key={task.id} className="group flex items-start gap-4 p-5 rounded-xl bg-white border border-border/50 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200">
-                  <div className={cn(
-                    "mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors",
-                    task.priority === 'urgent' ? "border-amber-500 bg-amber-50" : "border-muted-foreground/30"
-                  )}>
-                    {task.priority === 'urgent' && <AlertCircle className="w-3.5 h-3.5 text-amber-600" />}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{task.title}</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2 border-0 bg-primary shadow-sm h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2 text-white"><Hourglass className="w-5 h-5 text-white" />Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 flex flex-col h-full">
+              {waitlist ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="rounded-lg bg-white/12 border border-white/20 p-3">
+                      <p className="text-xs text-blue-100">Wait List Status</p>
+                      <p className="text-sm font-semibold text-white">Waiting for consult</p>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
-                    <Link href={task.actionUrl || "/tasks"}>
-                      <Button size="sm" variant={task.priority === 'urgent' ? "default" : "outline"} className="text-xs" asChild>
-                        <span>{task.actionLabel || "Complete Task"}</span>
-                      </Button>
-                    </Link>
+                    <div className="rounded-lg bg-white/12 border border-white/20 p-3">
+                      <p className="text-xs text-blue-100">Time Waited Since Referral</p>
+                      <p className="text-sm font-semibold text-white">{monthsWaited} months</p>
+                    </div>
+                    <div className="rounded-lg bg-white/12 border border-white/20 p-3">
+                      <p className="text-xs text-blue-100">Wait Time to Consult</p>
+                      <p className="text-sm font-semibold text-white">{consultEstimateLow}-{consultEstimateHigh} months</p>
+                    </div>
+                  </div>
+                  <div className="pt-3 mt-auto">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start mt-2">
+                      <div className="sm:col-span-2">
+                        <div className="flex justify-between items-center text-xs text-blue-100 mb-1.5">
+                          <span>Referral to Consult Timeline</span>
+                          <span>35%</span>
+                        </div>
+                        <Progress value={waitProgress} className="h-2.5 bg-white" indicatorClassName="bg-blue-200" />
+                      </div>
+                      <div className="sm:col-span-1 sm:justify-self-end self-end">
+                        <Link href="/status"><Button className="bg-blue-200 text-blue-900 hover:bg-blue-300">View Status</Button></Link>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-blue-100">No status information available yet.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 bg-primary shadow-sm h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2 text-white"><Calendar className="w-5 h-5 text-white" />Next Appointment</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 flex flex-col h-full">
+              {nextAppt ? (
+                <div className="space-y-4 flex flex-col h-full">
+                  <div className="space-y-1">
+                    <p className="font-semibold text-white">6 Month Appointment</p>
+                    <p className="text-sm text-blue-100">Zoom Call</p>
+                  </div>
+                  <p className="text-sm text-blue-100">{format(new Date(nextAppt.date), "MMMM d, yyyy • h:mm a")}</p>
+                  <div className="mt-auto pt-3">
+                    <Link href="/appointments"><Button className="w-full bg-blue-200 text-blue-900 hover:bg-blue-300">View Appointment</Button></Link>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="p-8 text-center bg-white rounded-xl border border-dashed border-border">
-                <CheckCircle2 className="w-12 h-12 text-sky-400 mx-auto mb-3" />
-                <h3 className="font-semibold text-lg">All caught up!</h3>
-                <p className="text-muted-foreground">You have no pending tasks at the moment.</p>
-              </div>
-            )}
-          </div>
-        </div>
+              ) : (
+                <div className="space-y-4 flex flex-col h-full">
+                  <p className="text-sm text-blue-100">No upcoming appointments.</p>
+                  <div className="mt-auto pt-3">
+                    <Link href="/appointments"><Button className="w-full bg-[#0b1f3a] text-white hover:bg-[#0b1f3a]/90">Go to Appointments</Button></Link>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
+          <Card className="lg:col-span-2 row-span-2 border border-border/60 bg-white shadow-sm">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2"><ListChecks className="w-5 h-5 text-primary" />Tasks</CardTitle>
+              <Link href="/tasks" className="text-sm text-primary font-medium inline-flex items-center gap-1">View all <ArrowRight className="w-4 h-4" /></Link>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {pendingTasks.length > 0 ? (
+                pendingTasks.slice(0, 7).map((task) => (
+                  <div key={task.id} className="border border-border/60 rounded-lg p-3 flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{task.title}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                    </div>
+                    <Badge className="bg-slate-100 text-slate-800 border-none">Pending</Badge>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No priority tasks right now.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border/60 bg-muted/30 shadow-sm h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2"><ClipboardList className="w-5 h-5 text-primary" />Latest Results</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 flex flex-col h-full">
+              {recentResults.length > 0 ? (
+                <>
+                  <div className="space-y-2">
+                    {recentResults.map((result) => (
+                      <div key={result.id} className="text-sm border-b border-border/40 pb-2 last:border-b-0 last:pb-0">
+                        <p className="font-medium text-foreground">{result.title}</p>
+                        <p className="text-muted-foreground">{result.category}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-auto pt-3">
+                    <Link href="/results"><Button className="w-full border-0 shadow-none bg-blue-200 text-blue-900 hover:bg-blue-300">View Results</Button></Link>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col h-full">
+                  <p className="text-sm text-muted-foreground">No recent results to display.</p>
+                  <div className="mt-auto pt-3">
+                    <Link href="/results"><Button className="w-full border-0 shadow-none bg-blue-200 text-blue-900 hover:bg-blue-300">View Results</Button></Link>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border/60 bg-muted/30 shadow-sm h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2"><BookOpen className="w-5 h-5 text-primary" />New Resources</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 flex flex-col h-full">
+              <div className="space-y-2">
+                {resourceItems.map((item) => (
+                  <div key={item.id} className="text-sm border-b border-border/40 pb-2 last:border-b-0 last:pb-0">
+                    <p className="font-medium text-foreground">{item.title}</p>
+                    <p className="text-muted-foreground">{item.subtitle}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-auto pt-3">
+                <Link href="/resources"><Button className="w-full border-0 shadow-none bg-blue-200 text-blue-900 hover:bg-blue-300">View Resources</Button></Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </Layout>
   );

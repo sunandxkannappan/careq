@@ -2,8 +2,9 @@ import { Link, useLocation } from "wouter";
 import {
   Home,
   Hourglass,
-  CalendarDays,
+  Calendar,
   ClipboardList,
+  ListChecks,
   BookOpen,
   User,
   Menu,
@@ -12,40 +13,43 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { useUser } from "@/hooks/use-data";
+import { useUser, useTasks } from "@/hooks/use-data";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { data: user } = useUser();
+  const { data: tasks } = useTasks();
 
   const navItems = [
     { icon: Home, label: "Dashboard", href: "/referral" },
     { icon: Hourglass, label: "Status", href: "/status" },
-    { icon: CalendarDays, label: "Appointments", href: "/appointments" },
-    { icon: ClipboardList, label: "Results", href: "/my-results" },
+    { icon: Calendar, label: "Appointments", href: "/appointments" },
+    { icon: ClipboardList, label: "Results", href: "/results" },
     { icon: BookOpen, label: "Resources", href: "/resources" },
-    { icon: User, label: "Profile", href: "/profile" },
+    { icon: User, label: "Account", href: "/account" },
   ];
+  const taskItem = { icon: ListChecks, label: "Tasks", href: "/tasks" };
+  const taskCount = (tasks || []).filter((task) => task.status === "Pending").length;
 
   const initials = user
     ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
     : "?";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row md:h-screen md:overflow-hidden font-sans text-foreground">
+    <div className="min-h-screen bg-white flex flex-col md:flex-row md:h-screen md:overflow-hidden font-sans text-foreground">
 
       {/* Mobile Header */}
-      <div className="md:hidden bg-white p-4 flex justify-between items-center border-b border-border shadow-sm sticky top-0 z-50">
+      <div className="md:hidden bg-sidebar p-4 flex justify-between items-center border-b border-sidebar-border sticky top-0 z-50">
         <Link href="/referral" className="flex items-center gap-2.5" data-testid="link-logo-mobile">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold font-display text-base shadow-md shadow-primary/30">
+          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-extrabold text-xl shadow-sm">
             Q
           </div>
           <span className="font-display font-bold text-xl text-foreground tracking-tight">CareQ</span>
         </Link>
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white transition-colors"
         >
           {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -59,12 +63,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Sidebar — dark slate-blue #1E293B */}
+      {/* Sidebar */}
       <aside className={cn(
         "fixed md:sticky top-0 left-0 h-dvh w-72 z-50",
         "flex flex-col shrink-0",
-        "bg-[#1E293B] border-r border-[#263447]",
-        "shadow-2xl md:shadow-[1px_0_0_#263447]",
+        "bg-sidebar border-r border-sidebar-border",
+        "shadow-2xl md:shadow-none",
         "transition-transform duration-300 ease-out",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
@@ -72,25 +76,57 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Brand */}
         <div className="px-5 pt-6 pb-4 shrink-0">
           <Link href="/referral" className="flex items-center gap-3 mb-5" data-testid="link-logo-sidebar">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-white font-bold font-display text-lg shadow-lg shadow-primary/50 shrink-0">
+            <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center text-white font-extrabold text-xl shrink-0">
               Q
             </div>
             <div>
-              <h1 className="font-display font-bold text-[1.1rem] text-white leading-none tracking-tight">
+              <h1 className="font-display font-bold text-[1.1rem] text-foreground leading-none tracking-tight">
                 CareQ
               </h1>
-              <p className="text-[10px] text-slate-400 font-medium leading-none mt-[3px] tracking-widest uppercase">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none mt-[3px] tracking-widest uppercase">
                 Patient Portal
               </p>
             </div>
           </Link>
+          <div className="mt-3 rounded-lg border border-border bg-white px-3 py-2">
+            <p className="text-sm font-medium text-foreground">Alberta Hip and Knee Clinic</p>
+          </div>
         </div>
 
         {/* Divider */}
-        <div className="mx-5 h-px bg-white/[0.07] shrink-0" />
+        <div className="mx-5 h-px bg-border shrink-0" />
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+          <Link href={taskItem.href}>
+            <div
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg",
+                "text-[13.5px] font-medium cursor-pointer group",
+                "transition-colors duration-150 border border-transparent mb-2",
+                location === taskItem.href
+                  ? "bg-accent text-primary border-primary/10"
+                  : "text-neutral-600 hover:bg-white hover:text-foreground hover:border-border"
+              )}
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <taskItem.icon
+                className={cn(
+                  "w-[17px] h-[17px] shrink-0 transition-colors duration-150",
+                  location === taskItem.href
+                    ? "text-primary"
+                    : "text-neutral-500 group-hover:text-neutral-700"
+                )}
+              />
+              <span className={cn(location === taskItem.href && "font-semibold")}>{taskItem.label}</span>
+              <div className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-semibold flex items-center justify-center shrink-0">
+                {taskCount}
+              </div>
+            </div>
+          </Link>
+
+          <div className="mx-2 h-px bg-border mb-2" />
+
           {navItems.map((item) => {
             const isActive = location === item.href;
             return (
@@ -99,10 +135,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg",
                     "text-[13.5px] font-medium cursor-pointer group",
-                    "transition-colors duration-150",
+                    "transition-colors duration-150 border border-transparent",
                     isActive
-                      ? "bg-primary/[0.15] text-white"
-                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-100"
+                      ? "bg-accent text-primary border-primary/10"
+                      : "text-neutral-600 hover:bg-white hover:text-foreground hover:border-border"
                   )}
                   onClick={() => setIsSidebarOpen(false)}
                 >
@@ -110,11 +146,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     "w-[17px] h-[17px] shrink-0 transition-colors duration-150",
                     isActive
                       ? "text-primary"
-                      : "text-slate-500 group-hover:text-slate-300"
+                      : "text-neutral-500 group-hover:text-neutral-700"
                   )} />
                   <span className={cn(isActive && "font-semibold")}>{item.label}</span>
                   {isActive && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />
                   )}
                 </div>
               </Link>
@@ -123,26 +159,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Divider */}
-        <div className="mx-5 h-px bg-white/[0.07] shrink-0" />
+        <div className="mx-5 h-px bg-border shrink-0" />
 
         {/* User footer */}
         <div className="p-4 shrink-0">
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/[0.05] border border-white/[0.07]">
-            <div className="w-8 h-8 rounded-full bg-primary/70 flex items-center justify-center text-white text-xs font-bold font-display shrink-0 ring-1 ring-primary/40">
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white border border-border">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold font-display shrink-0">
               {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-slate-100 truncate leading-snug">
+              <p className="text-[13px] font-semibold text-foreground truncate leading-snug">
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className="text-[11px] text-slate-500 truncate leading-snug">{user?.email}</p>
+              <p className="text-[11px] text-muted-foreground truncate leading-snug">{user?.email}</p>
             </div>
             <button
-              className="text-slate-500 hover:text-red-400 transition-colors p-1 rounded shrink-0"
+              className="text-muted-foreground hover:text-primary transition-colors p-1 rounded shrink-0"
               onClick={() => {
                 localStorage.removeItem("careq_auth");
                 localStorage.removeItem("careq_onboarding");
-                window.location.href = "/login";
+                window.location.href = "/";
               }}
               data-testid="button-patient-logout"
               aria-label="Log out"
@@ -154,7 +190,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:min-w-0 overflow-y-auto">
+      <main className="flex-1 md:min-w-0 overflow-y-auto bg-white">
         <div className="max-w-6xl mx-auto p-4 md:p-8 lg:p-12 animate-enter">
           {children}
         </div>

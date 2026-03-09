@@ -57,7 +57,7 @@ export default function Consent() {
 
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white font-bold font-display text-2xl shadow-lg shadow-primary/30 mb-3">
+          <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold font-display text-2xl mb-3">
             Q
           </div>
           <h1 className="font-display font-bold text-2xl text-foreground tracking-tight">CareQ</h1>
