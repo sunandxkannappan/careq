@@ -22,6 +22,9 @@ import {
   FlaskConical,
   Salad,
   ChevronDown,
+  Image,
+  ScanLine,
+  Camera,
 } from "lucide-react";
 import { ProviderLayout } from "@/provider/components/ProviderLayout";
 import {
@@ -406,6 +409,48 @@ export default function EConsultDashboard({ patientId }: { patientId: string }) 
                     })}
                   </div>
                 </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Clinical Images (collapsed) */}
+            <AccordionItem value="images" className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <AccordionTrigger className="px-5 py-3.5 hover:no-underline">
+                <span className="flex items-center gap-2 text-[13px] font-bold text-slate-900">
+                  <Image className="w-4 h-4 text-slate-400" />
+                  Clinical Images
+                  <span className="text-[11px] font-medium text-slate-400 ml-1">
+                    {econsult.images.length} {econsult.images.length === 1 ? "image" : "images"} uploaded
+                  </span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-5 pb-4">
+                {econsult.images.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+                    <ScanLine className="w-8 h-8 mb-2" />
+                    <p className="text-sm">No images uploaded for this patient.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {econsult.images.map((img) => {
+                      const TypeIcon = img.type === "imaging" ? ScanLine : img.type === "clinical-photo" ? Camera : Image;
+                      return (
+                        <div key={img.id} className="group bg-slate-50 rounded-lg border border-slate-200 aspect-[4/3] flex flex-col items-center justify-center p-3 text-center hover:border-primary/30 hover:bg-blue-50/30 transition-colors cursor-pointer">
+                          <TypeIcon className="w-7 h-7 text-slate-300 group-hover:text-primary/40 mb-2 transition-colors" />
+                          <p className="text-[11px] font-semibold text-slate-600 leading-tight">{img.label}</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">{img.date}</p>
+                          <span className={cn(
+                            "mt-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide",
+                            img.type === "imaging"        ? "bg-blue-50 text-blue-600" :
+                            img.type === "clinical-photo" ? "bg-purple-50 text-purple-600" :
+                            "bg-slate-100 text-slate-500"
+                          )}>
+                            {img.type === "imaging" ? "Imaging" : img.type === "clinical-photo" ? "Photo" : "Diagram"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </AccordionContent>
             </AccordionItem>
 
