@@ -364,7 +364,7 @@ export function PreChartPanel({ patient, meetingId, patientId: passedPatientId, 
 
   return (
     <div
-      className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-white"
+      className="flex flex-col h-full overflow-hidden bg-white"
       style={{ fontFamily: '"DM Sans", sans-serif' }}
     >
       {/* ── Top bar ───────────────────────────────────────────────────────── */}
