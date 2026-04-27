@@ -108,7 +108,7 @@ export interface EConsultPatient {
   weightHistory: MetricDataPoint[];
   symptomScores: SymptomDataPoint[];
   treatments: TreatmentAttempt[];
-  conditions: { name: string; diagnosedDate: string; status: 'active' | 'resolved' | 'managed' }[];
+  conditions: { name: string; diagnosedDate: string; status: 'active' | 'resolved' | 'managed'; system?: string }[];
   images: PatientImage[];
   assessmentNotes: string;
   planItems: string[];
@@ -961,11 +961,11 @@ export const MOCK_ECONSULT_PATIENTS: EConsultPatient[] = [
       },
     ],
     conditions: [
-      { name: "Right knee osteoarthritis (revision candidate)", diagnosedDate: "2025-07", status: "active" },
-      { name: "Previous R TKR", diagnosedDate: "2020-03", status: "managed" },
-      { name: "Type 2 Diabetes", diagnosedDate: "2015-06", status: "managed" },
-      { name: "Hypertension", diagnosedDate: "2012-01", status: "managed" },
-      { name: "CABG (coronary artery bypass)", diagnosedDate: "2018-11", status: "resolved" },
+      { name: "R knee osteoarthritis (revision candidate)", diagnosedDate: "2025-07", status: "active",   system: "Musculoskeletal" },
+      { name: "Previous R TKR",                            diagnosedDate: "2020-03", status: "managed",  system: "Musculoskeletal" },
+      { name: "Type 2 Diabetes",                           diagnosedDate: "2015-06", status: "managed",  system: "Endocrine" },
+      { name: "Hypertension",                              diagnosedDate: "2012-01", status: "managed",  system: "Cardiovascular" },
+      { name: "CABG (coronary artery bypass)",             diagnosedDate: "2018-11", status: "resolved", system: "Cardiovascular" },
     ],
     images: [
       { id: "img1", url: "", date: "2025-07-20", label: "R Knee AP X-ray (Baseline)", type: "imaging" },
@@ -1040,9 +1040,9 @@ export const MOCK_ECONSULT_PATIENTS: EConsultPatient[] = [
       },
     ],
     conditions: [
-      { name: "Left hip osteoarthritis (severe)", diagnosedDate: "2024-03", status: "active" },
-      { name: "Hypertension", diagnosedDate: "2019-05", status: "managed" },
-      { name: "Type 2 Diabetes", diagnosedDate: "2020-08", status: "managed" },
+      { name: "L hip osteoarthritis (severe)", diagnosedDate: "2024-03", status: "active",  system: "Musculoskeletal" },
+      { name: "Hypertension",                  diagnosedDate: "2019-05", status: "managed", system: "Cardiovascular" },
+      { name: "Type 2 Diabetes",               diagnosedDate: "2020-08", status: "managed", system: "Endocrine" },
     ],
     images: [
       { id: "img1", url: "", date: "2025-09-25", label: "L Hip AP X-ray", type: "imaging" },
