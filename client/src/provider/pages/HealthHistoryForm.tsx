@@ -1144,13 +1144,7 @@ export function HealthHistoryFormContent() {
 
         <button
           onClick={goNext}
-          disabled={!canAdvance()}
-          className={cn(
-            "flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all",
-            canAdvance()
-              ? "bg-[#1f64ad] text-white shadow-md hover:bg-[#1a54a0]"
-              : "bg-slate-100 text-slate-300 cursor-not-allowed"
-          )}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all bg-[#1f64ad] text-white shadow-md hover:bg-[#1a54a0]"
         >
           {currentStep === total - 1 ? "Submit" : "OK"}
           <ChevronRight size={16} />
