@@ -536,7 +536,7 @@ export default function ProviderCharting() {
               </div>
               
               {/* Form Content Area */}
-              <div className={`flex-1 w-full relative ${activeForm.type === 'pre-chart' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
+              <div className="flex-1 overflow-y-auto w-full relative">
                 {activeForm.type === 'charting' ? (
                     <ChartingPanel 
                        meetingId={activeForm.meetingId} 

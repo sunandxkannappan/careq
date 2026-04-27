@@ -1,45 +1,24 @@
-
-import { useState, useCallback } from "react";
-import { ProviderLayout } from "@/provider/components/ProviderLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Plus,
-  Trash2,
-  AlertCircle,
-  ClipboardList,
+  ChevronLeft, ChevronRight, Check, User, Phone, Mail, MessageSquare,
+  Languages, Users, MapPin, Briefcase, Car, Home, Shield, HeartPulse,
+  Activity, Pill, Syringe, Dumbbell, Ban, AlertTriangle, Stethoscope,
+  Cigarette, Wine, Cannabis, ClipboardList, Brain, Bone, Leaf,
+  BadgeCheck, Moon, Zap, Thermometer, Scale, Hospital, Building2,
+  PersonStanding, Baby,
 } from "lucide-react";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
-// ─── Types ──────────────────────────────────────────────────
-
-interface AllergyEntry { allergy: string; reaction: string }
-interface SurgeryEntry { what: string; when: string; location: string }
-interface TestEntry { name: string; checked: boolean; date: string; location: string }
-interface FamilyEntry { who: string; what: string }
-interface SpecialistEntry { type: string; name: string; date: string; location: string }
-interface MedicationEntry { name: string; dose: string; timeOfDay: string }
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 interface FormData {
-  // Step 1 — Patient registration (Instrument 1)
-  patientName: string;
+  // Patient registration
   legalFirstName: string;
   legalLastName: string;
   preferredName: string;
   birthdate: string;
-  sexAssignedAtBirth: "male" | "female" | "intersex" | "prefer-not-to-say" | "";
-  genderIdentity: "man" | "woman" | "non-binary" | "prefer-not-to-say" | "self-describe" | "";
+  sexAssignedAtBirth: string;
+  genderIdentity: string;
   genderIdentityOther: string;
   healthCareNumber: string;
   addressStreet: string;
@@ -47,1967 +26,1136 @@ interface FormData {
   addressProvince: string;
   addressPostalCode: string;
   primaryPhone: string;
-  contactMethod: "phone" | "sms" | "email" | "portal" | "";
+  contactMethod: string;
   email: string;
-  preferredLanguage: "english" | "french" | "other" | "";
+  preferredLanguage: string;
   preferredLanguageOther: string;
-  interpreterRequired: "yes" | "no" | "";
+  interpreterRequired: string;
   interpreterLanguage: string;
-
-  // Step 1 continued — Emergency contact
   emergencyContactName: string;
   emergencyContactRelationship: string;
   emergencyContactPhone: string;
-  emergencyContactIsSDM: "yes" | "no" | "";
-  directiveStatus: "yes" | "no" | "in-progress" | "";
-
-  // Step 1 continued — Referring clinician & care team
+  emergencyContactIsSDM: string;
+  directiveStatus: string;
   referringPhysicianName: string;
   referringClinic: string;
   referringPhysicianPhone: string;
-  referringPhysicianFax: string;
   referralDate: string;
-  hasFamilyPhysician: "yes" | "no" | "";
+  hasFamilyPhysician: string;
   familyPhysicianName: string;
   familyPhysicianClinic: string;
-
-  // Step 1 continued — Joint & condition information
+  // Joint info
   jointHip: boolean;
   jointKnee: boolean;
+  jointShoulder: boolean;
   jointOther: boolean;
   jointOtherText: string;
-  symptomDuration: "<3months" | "3-6months" | "6-12months" | "1-2years" | "more-2years" | "";
-  priorJointSurgery: "yes" | "no" | "";
+  side: string;
+  symptomDuration: string;
+  priorJointSurgery: string;
   priorJointSurgeryDetails: string;
-  imagingNo: boolean;
   imagingXray: boolean;
   imagingMRI: boolean;
   imagingCT: boolean;
   imagingUltrasound: boolean;
+  imagingNone: boolean;
   imagingWhereWhen: string;
-  side: string;
-  previousInjuries: string;
   walkingAid: string;
   walkingDistance: string;
   painWakesSleep: string;
-  limitedActivities: string;
-
-  // Step 3 — Pain management
-  triedPhysiotherapy: boolean;
-  triedBracing: boolean;
-  triedAntiInflammatories: boolean;
+  // Pain management
+  triedPhysiotherapy: string;
+  triedBracing: string;
+  triedAntiInflammatories: string;
   antiInflammatoriesDetails: string;
-  triedOtherPainMed: boolean;
-  otherPainMedDetails: string;
-  triedInjections: boolean;
+  triedInjections: string;
   injectionsDetails: string;
-  triedOther: boolean;
+  triedWeightLoss: string;
+  triedExercise: string;
+  triedOther: string;
   otherDetails: string;
-
-  // Step 4 — Allergies
-  allergies: AllergyEntry[];
+  // Allergies
+  hasAllergies: string;
+  allergiesText: string;
   metalAllergy: string;
   latexAllergy: string;
-
-  // Step 5 — Past surgical history
-  surgeries: SurgeryEntry[];
-
-  imagingNo: boolean;
-  imagingXray: boolean;
-  imagingMRI: boolean;
-  imagingCT: boolean;
-  imagingUltrasound: boolean;
-  imagingWhereWhen: string;
-
-  // Step 6 — Previous tests
-  tests: TestEntry[];
-
-  // Step 7 — Social history
+  // Surgical history
+  hasSurgeries: string;
+  surgeriesText: string;
+  // Social history
   tobaccoUse: string;
-  tobaccoQuitDate: string;
-  tobaccoYears: string;
-  tobaccoAmountPerDay: string;
-  tobaccoTypes: { cigarettes: boolean; cigars: boolean; vape: boolean; chew: boolean };
+  tobaccoDetails: string;
   alcoholUse: string;
   alcoholDrinksPerWeek: string;
-  alcoholTypes: { beer: boolean; wine: boolean; liquor: boolean };
   drugUse: string;
-  language: string;
-  languageOther: string;
-  personalDirective: string;
-  medicalConditions: {
-    diabetes: boolean;
-    highBloodPressure: boolean;
-    heartDisease: boolean;
-    stroke: boolean;
-    kidneyDisease: boolean;
-    lungDisease: boolean;
-    bloodClots: boolean;
-    cancer: boolean;
-    obesity: boolean;
-    mentalHealth: boolean;
-    rheumatoidArthritis: boolean;
-    osteoporosis: boolean;
-    none: boolean;
-  };
-  currentMedications: string;
-  knownAllergies: string;
-  smokingStatus: "no" | "yes" | "former" | "";
-  smokingPacksPerDay: string;
-  smokingQuitDate: string;
-  alcoholRegular: "yes" | "no" | "";
-  alcoholDrinksPerWeek: string;
-
-  // Step 8 — Social & logistical
-  livingLocation: "city" | "town" | "remote" | "";
-  caregiverHelp: "yes" | "no" | "unsure" | "";
-  transportationReliable: "yes" | "no" | "sometimes" | "";
-  employmentStatus: "full-time" | "part-time" | "no" | "retired" | "prefer-not-to-say" | "";
-  surgeryBarrier: "no" | "yes" | "";
+  // Medical conditions (checkbox group stored as comma-separated)
+  medicalConditions: string;
+  // Logistical
+  livingLocation: string;
+  caregiverHelp: string;
+  transportationReliable: string;
+  employmentStatus: string;
+  surgeryBarrier: string;
   surgeryBarrierDetails: string;
-
-  // Step 9 — Consent & privacy
-  consentData: "yes" | "no" | "";
-  consentElectronic: "yes" | "no" | "";
-  consentShare: "yes" | "no" | "";
-  signature: string;
-  signatureDate: string;
-  completedByName: string;
-  completedByRelationship: string;
-
-  // Step 8 — Family & anesthetic
-  familyHistory: FamilyEntry[];
-  anestheticGeneral: boolean;
-  anestheticSpinal: boolean;
-  anestheticLocal: boolean;
-  anestheticComplications: boolean;
-  anestheticNausea: boolean;
-
-  // Step 9 — Specialist assessments
-  specialists: SpecialistEntry[];
-
-  // Step 10 — Support & fall risk
-  supportName: string;
-  supportRelationship: string;
-  supportPhone: string;
+  // Anesthetic & family
+  anestheticTypes: string;
+  anestheticComplications: string;
+  familyAnestheticProblems: string;
+  // Support & fall risk
   liveAlone: string;
+  supportPersonName: string;
   caregiverAfterSurgery: string;
-  caregiverDuration: string;
   fallHistory: string;
-  fallDates: string;
-  fallInjuries: string;
-  fallInjuryDetails: string;
   dizzyOnStanding: string;
-
-  // Step 11 — Review of symptoms
-  symptoms: Record<string, boolean>;
-  symptomsO2AtHome: string;
-  symptomsCpap: boolean;
-  diabetesType: string;
-  diabetesInsulin: string;
-  cancerSelfDates: string;
-  cancerTreatment: string;
-  cortisoneWhen: string;
-  cortisoneWhere: string;
-
-  // Step 12 — Other questions & medications
-  confusionAfterAnesthetic: string;
-  heartBreathingWalking: string;
-  heartBreathingStairs: string;
-  antibioticResistant: string;
-  communicableDisease: string;
-  recentWeightLoss: string;
-  weightLossAmount: string;
-  decreasedAppetite: string;
+  // Review of symptoms (key ones)
+  diabetes: string;
+  highBloodPressure: string;
+  heartDisease: string;
+  lungDisease: string;
+  kidneyDisease: string;
+  sleepApnea: string;
+  otherConditions: string;
+  // Dental / vision / hearing
+  dentalIssues: string;
   visionProblems: string;
-  visionAids: string;
   hearingProblems: string;
-  hearingAids: string;
-  dentalFullDentures: boolean;
-  dentalLastExam: string;
-  dentalCaps: boolean;
-  dentalBridgework: boolean;
-  motionSickness: string;
+  // Vaccines
   fluVaccine: string;
-  fluVaccineWhen: string;
-  pneumoniaVaccine: string;
-  pneumoniaVaccineWhen: string;
   covidVaccine: string;
-  covidVaccineWhen: string;
-  medications: MedicationEntry[];
+  // Medications & consent
+  currentMedications: string;
+  consentData: string;
+  consentElectronic: string;
+  consentShare: string;
+  signature: string;
+  completedByName: string;
 }
 
-const INITIAL_TESTS: TestEntry[] = [
-  { name: "Exercise stress test (treadmill)", checked: false, date: "", location: "" },
-  { name: "Thallium (nuclear medicine)", checked: false, date: "", location: "" },
-  { name: "Heart catheterization (angiogram)", checked: false, date: "", location: "" },
-  { name: "ECHO (heart ultrasound)", checked: false, date: "", location: "" },
-  { name: "Holter monitor", checked: false, date: "", location: "" },
-  { name: "ECG", checked: false, date: "", location: "" },
-  { name: "Pulmonary function", checked: false, date: "", location: "" },
-  { name: "Chest x-ray", checked: false, date: "", location: "" },
-  { name: "Sleep Study", checked: false, date: "", location: "" },
-];
-
-const DEFAULT_SPECIALISTS: SpecialistEntry[] = [
-  { type: "Cardiologist", name: "", date: "", location: "" },
-  { type: "Neurologist", name: "", date: "", location: "" },
-  { type: "Pulmonologist", name: "", date: "", location: "" },
-];
-
-const STEPS = [
-  "Instrument 1 — Patient Registration",
-  "Joint Information",
-  "Pain Management",
-  "Allergies",
-  "Surgical History",
-  "Previous Tests",
-  "Social History",
-  "Family & Anesthetic",
-  "Specialist Assessments",
-  "Support & Fall Risk",
-  "Review of Symptoms",
-  "Other Questions & Medications",
-];
-
-function getInitialFormData(): FormData {
+function getInitialData(): FormData {
   return {
-    patientName: "", legalFirstName: "", legalLastName: "", preferredName: "", birthdate: "", sexAssignedAtBirth: "", genderIdentity: "", genderIdentityOther: "", healthCareNumber: "",
-    addressStreet: "", addressCity: "", addressProvince: "", addressPostalCode: "", primaryPhone: "", contactMethod: "", email: "", preferredLanguage: "", preferredLanguageOther: "", interpreterRequired: "", interpreterLanguage: "",
-    emergencyContactName: "", emergencyContactRelationship: "", emergencyContactPhone: "", emergencyContactIsSDM: "", directiveStatus: "",
-    referringPhysicianName: "", referringClinic: "", referringPhysicianPhone: "", referringPhysicianFax: "", referralDate: "", hasFamilyPhysician: "", familyPhysicianName: "", familyPhysicianClinic: "",
-    jointHip: false, jointKnee: false, jointOther: false, jointOtherText: "", symptomDuration: "", priorJointSurgery: "", priorJointSurgeryDetails: "", imagingNo: false, imagingXray: false, imagingMRI: false, imagingCT: false, imagingUltrasound: false, imagingWhereWhen: "",
-    side: "", previousInjuries: "", walkingAid: "", walkingDistance: "", painWakesSleep: "", limitedActivities: "",
-    triedPhysiotherapy: false, triedBracing: false,
-    triedAntiInflammatories: false, antiInflammatoriesDetails: "",
-    triedOtherPainMed: false, otherPainMedDetails: "",
-    triedInjections: false, injectionsDetails: "",
-    triedOther: false, otherDetails: "",
-    allergies: [{ allergy: "", reaction: "" }],
-    metalAllergy: "", latexAllergy: "",
-    surgeries: [{ what: "", when: "", location: "" }],
-    tests: [...INITIAL_TESTS],
-    tobaccoUse: "", tobaccoQuitDate: "", tobaccoYears: "", tobaccoAmountPerDay: "",
-    tobaccoTypes: { cigarettes: false, cigars: false, vape: false, chew: false },
-    imagingNo: false, imagingXray: false, imagingMRI: false, imagingCT: false, imagingUltrasound: false, imagingWhereWhen: "",
-    alcoholUse: "", alcoholDrinksPerWeek: "",
-    alcoholTypes: { beer: false, wine: false, liquor: false },
-    drugUse: "", language: "english", languageOther: "", personalDirective: "",
-    medicalConditions: { diabetes: false, highBloodPressure: false, heartDisease: false, stroke: false, kidneyDisease: false, lungDisease: false, bloodClots: false, cancer: false, obesity: false, mentalHealth: false, rheumatoidArthritis: false, osteoporosis: false, none: false },
-    currentMedications: "", knownAllergies: "", smokingStatus: "", smokingPacksPerDay: "", smokingQuitDate: "", alcoholRegular: "", alcoholDrinksPerWeek: "",
-    livingLocation: "", caregiverHelp: "", transportationReliable: "", employmentStatus: "", surgeryBarrier: "", surgeryBarrierDetails: "",
-    consentData: "", consentElectronic: "", consentShare: "", signature: "", signatureDate: "", completedByName: "", completedByRelationship: "",
-    familyHistory: [{ who: "", what: "" }],
-    anestheticGeneral: false, anestheticSpinal: false, anestheticLocal: false,
-    anestheticComplications: false, anestheticNausea: false,
-    specialists: [...DEFAULT_SPECIALISTS],
-    supportName: "", supportRelationship: "", supportPhone: "",
-    liveAlone: "", caregiverAfterSurgery: "", caregiverDuration: "",
-    fallHistory: "", fallDates: "", fallInjuries: "", fallInjuryDetails: "", dizzyOnStanding: "",
-    symptoms: {},
-    symptomsO2AtHome: "", symptomsCpap: false,
-    diabetesType: "", diabetesInsulin: "",
-    cancerSelfDates: "", cancerTreatment: "",
-    cortisoneWhen: "", cortisoneWhere: "",
-    confusionAfterAnesthetic: "", heartBreathingWalking: "", heartBreathingStairs: "",
-    antibioticResistant: "", communicableDisease: "",
-    recentWeightLoss: "", weightLossAmount: "", decreasedAppetite: "",
-    visionProblems: "", visionAids: "", hearingProblems: "", hearingAids: "",
-    dentalFullDentures: false, dentalLastExam: "", dentalCaps: false, dentalBridgework: false,
-    motionSickness: "",
-    fluVaccine: "", fluVaccineWhen: "",
-    pneumoniaVaccine: "", pneumoniaVaccineWhen: "",
-    covidVaccine: "", covidVaccineWhen: "",
-    medications: [{ name: "", dose: "", timeOfDay: "" }],
+    legalFirstName: "", legalLastName: "", preferredName: "", birthdate: "",
+    sexAssignedAtBirth: "", genderIdentity: "", genderIdentityOther: "",
+    healthCareNumber: "", addressStreet: "", addressCity: "", addressProvince: "",
+    addressPostalCode: "", primaryPhone: "", contactMethod: "", email: "",
+    preferredLanguage: "", preferredLanguageOther: "", interpreterRequired: "",
+    interpreterLanguage: "", emergencyContactName: "", emergencyContactRelationship: "",
+    emergencyContactPhone: "", emergencyContactIsSDM: "", directiveStatus: "",
+    referringPhysicianName: "", referringClinic: "", referringPhysicianPhone: "",
+    referralDate: "", hasFamilyPhysician: "", familyPhysicianName: "",
+    familyPhysicianClinic: "",
+    jointHip: false, jointKnee: false, jointShoulder: false, jointOther: false,
+    jointOtherText: "", side: "", symptomDuration: "", priorJointSurgery: "",
+    priorJointSurgeryDetails: "", imagingXray: false, imagingMRI: false,
+    imagingCT: false, imagingUltrasound: false, imagingNone: false,
+    imagingWhereWhen: "", walkingAid: "", walkingDistance: "", painWakesSleep: "",
+    triedPhysiotherapy: "", triedBracing: "", triedAntiInflammatories: "",
+    antiInflammatoriesDetails: "", triedInjections: "", injectionsDetails: "",
+    triedWeightLoss: "", triedExercise: "", triedOther: "", otherDetails: "",
+    hasAllergies: "", allergiesText: "", metalAllergy: "", latexAllergy: "",
+    hasSurgeries: "", surgeriesText: "",
+    tobaccoUse: "", tobaccoDetails: "", alcoholUse: "", alcoholDrinksPerWeek: "",
+    drugUse: "", medicalConditions: "", livingLocation: "", caregiverHelp: "",
+    transportationReliable: "", employmentStatus: "", surgeryBarrier: "",
+    surgeryBarrierDetails: "", anestheticTypes: "", anestheticComplications: "",
+    familyAnestheticProblems: "", liveAlone: "", supportPersonName: "",
+    caregiverAfterSurgery: "", fallHistory: "", dizzyOnStanding: "",
+    diabetes: "", highBloodPressure: "", heartDisease: "", lungDisease: "",
+    kidneyDisease: "", sleepApnea: "", otherConditions: "",
+    dentalIssues: "", visionProblems: "", hearingProblems: "",
+    fluVaccine: "", covidVaccine: "", currentMedications: "",
+    consentData: "", consentElectronic: "", consentShare: "",
+    signature: "", completedByName: "",
   };
 }
 
-// ─── Reusable sub-components (senior-friendly: large targets) ─────
+// ─── Icon maps ───────────────────────────────────────────────────────────────
 
-function BigRadioOption({ value, label, selected, onSelect }: {
-  value: string; label: string; selected: boolean; onSelect: (v: string) => void;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          onClick={() => onSelect(value)}
-          className={cn(
-            "w-full min-w-0 flex items-center gap-3 px-4 py-3.5 rounded-lg border-2 transition-all text-left min-h-[52px]",
-            "text-[15px] font-medium",
-            selected
-              ? "border-primary bg-primary/5 text-primary"
-              : "border-border bg-white text-foreground hover:border-primary/30 hover:bg-muted/30"
-          )}
-        >
-          <div className={cn(
-            "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors",
-            selected ? "border-primary bg-primary" : "border-muted-foreground/40"
-          )}>
-            {selected && <div className="w-2 h-2 rounded-full bg-white" />}
-          </div>
-          <span className="min-w-0 overflow-hidden line-clamp-2">{label}</span>
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-xs text-center bg-primary text-white border-primary">{label}</TooltipContent>
-    </Tooltip>
-  );
+const OPTION_ICON: Record<string, any> = {
+  // Sex / gender
+  "Male": User, "Female": User, "Intersex": Users,
+  "Man": User, "Woman": User, "Non-binary": Users, "Self-describe": MessageSquare,
+  // Contact
+  "Phone": Phone, "SMS / Text": MessageSquare, "Email": Mail, "Patient Portal": Home,
+  // Language
+  "English": Languages, "French": Languages,
+  // Joints
+  "Hip": PersonStanding, "Knee": PersonStanding, "Shoulder": PersonStanding,
+  "Other": ClipboardList,
+  // Side
+  "Left": ChevronLeft, "Right": ChevronRight, "Both": Users,
+  // Duration
+  "Less than 3 months": Zap, "3–6 months": Activity, "6–12 months": Activity,
+  "1–2 years": Activity, "More than 2 years": AlertTriangle,
+  // Walking aid
+  "None": BadgeCheck, "Cane": PersonStanding, "Walker": PersonStanding,
+  "Wheelchair": PersonStanding,
+  // Treatments
+  "Physiotherapy": Dumbbell, "Bracing": Shield, "Anti-inflammatories": Pill,
+  "Cortisone injections": Syringe, "Weight loss program": Scale,
+  "Exercise program": Dumbbell, "Acupuncture": Zap,
+  // Lifestyle
+  "Cigarettes / Tobacco": Cigarette, "Cannabis": Cannabis, "Alcohol": Wine,
+  "Never": Ban, "Former user": Leaf, "Current user": AlertTriangle,
+  // Employment
+  "Full-time": Briefcase, "Part-time": Briefcase, "Not working": Home,
+  "Retired": Leaf, "Prefer not to say": Shield,
+  // Living
+  "City": Building2, "Town": MapPin, "Rural / Remote": Home,
+  // Anesthetic types
+  "General (put to sleep)": Moon, "Spinal": Stethoscope, "Local / Regional": Syringe,
+  // Medical conditions
+  "Diabetes": Thermometer, "High blood pressure": HeartPulse, "Heart disease": HeartPulse,
+  "Lung disease": Activity, "Kidney disease": Activity, "Sleep apnea": Moon,
+  "Stroke": Brain, "Cancer": Stethoscope, "Obesity": Scale,
+  "Mental health condition": Brain, "Rheumatoid arthritis": Bone,
+  "Osteoporosis": Bone, "None of these": BadgeCheck,
+  // Consent
+  "I agree": BadgeCheck, "I do not agree": Ban,
+  // Transport
+  "Always": Car,
+  // Caregiver / yes-no
+  "Yes": Check, "No": Ban, "Sometimes": Activity, "Unsure": AlertTriangle,
+  "Yes, I have one": Users, "No, I need help": AlertTriangle,
+};
+
+const OPTION_COLOR: Record<string, string> = {
+  "Yes": "border-green-300 bg-green-50 text-green-700",
+  "Yes, I have one": "border-green-300 bg-green-50 text-green-700",
+  "I agree": "border-green-300 bg-green-50 text-green-700",
+  "Always": "border-green-300 bg-green-50 text-green-700",
+  "None": "border-green-300 bg-green-50 text-green-700",
+  "None of these": "border-green-300 bg-green-50 text-green-700",
+  "No": "border-slate-200 bg-slate-50 text-slate-600",
+  "I do not agree": "border-red-200 bg-red-50 text-red-600",
+  "Sometimes": "border-amber-200 bg-amber-50 text-amber-700",
+  "Unsure": "border-amber-200 bg-amber-50 text-amber-700",
+  "No, I need help": "border-amber-200 bg-amber-50 text-amber-700",
+  "Current user": "border-red-200 bg-red-50 text-red-600",
+  "More than 2 years": "border-red-200 bg-red-50 text-red-600",
+};
+
+// ─── Question definition ─────────────────────────────────────────────────────
+
+type QType = "patient-info" | "emergency-contact" | "referring" | "joint-select"
+  | "imaging-select" | "radio" | "checkbox-group" | "text" | "textarea"
+  | "medications-text" | "conditions-select" | "consent-group";
+
+interface Q {
+  id: string;
+  section: string;
+  label: string;
+  sublabel?: string;
+  type: QType;
+  opts?: string[];
+  field?: keyof FormData;
+  showIf?: (d: FormData) => boolean;
 }
 
-function BigCheckbox({ checked, onCheckedChange, label, id }: {
-  checked: boolean; onCheckedChange: (v: boolean) => void; label: string; id: string;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          onClick={() => onCheckedChange(!checked)}
-          className={cn(
-            "w-full min-w-0 flex items-center gap-3 px-4 py-3.5 rounded-lg border-2 transition-all text-left min-h-[52px]",
-            "text-[15px] font-medium",
-            checked
-              ? "border-primary bg-primary/5 text-primary"
-              : "border-border bg-white text-foreground hover:border-primary/30 hover:bg-muted/30"
-          )}
-        >
-          <div className={cn(
-            "w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-colors",
-            checked ? "border-primary bg-primary" : "border-muted-foreground/40"
-          )}>
-            {checked && <Check className="w-3 h-3 text-white" />}
-          </div>
-          <span className="min-w-0 overflow-hidden line-clamp-2">{label}</span>
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-xs text-center bg-primary text-white border-primary">{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-
-function YesNoToggle({ value, onChange, label }: {
-  value: string; onChange: (v: string) => void; label?: string;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      {label && <span className="text-sm text-muted-foreground mr-1">{label}</span>}
-      <button
-        type="button"
-        onClick={() => onChange("no")}
-        className={cn(
-          "px-5 py-2.5 rounded-l-lg border-2 border-r-0 text-[15px] font-medium transition-all min-h-[44px]",
-          value === "no"
-            ? "border-primary bg-primary/5 text-primary"
-            : "border-border text-muted-foreground hover:bg-muted/30"
-        )}
-      >No</button>
-      <button
-        type="button"
-        onClick={() => onChange("yes")}
-        className={cn(
-          "px-5 py-2.5 rounded-r-lg border-2 text-[15px] font-medium transition-all min-h-[44px]",
-          value === "yes"
-            ? "border-primary bg-primary/5 text-primary"
-            : "border-border text-muted-foreground hover:bg-muted/30"
-        )}
-      >Yes</button>
-    </div>
-  );
-}
-
-function FormField({ label, required, children, hint }: {
-  label: string; required?: boolean; children: React.ReactNode; hint?: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <Label className="text-[15px] font-medium text-foreground">
-        {label}
-        {required && <span className="text-destructive ml-1">*</span>}
-      </Label>
-      {hint && <p className="text-sm text-muted-foreground -mt-1">{hint}</p>}
-      {children}
-    </div>
-  );
-}
-
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-lg font-semibold font-display tracking-tight text-foreground">
-      {children}
-    </h3>
-  );
-}
-
-function BigInput({ ...props }: React.ComponentProps<typeof Input>) {
-  return <Input {...props} className={cn("h-12 text-[15px] px-4", props.className)} />;
-}
-
-function BigTextarea({ ...props }: React.ComponentProps<typeof Textarea>) {
-  return <Textarea {...props} className={cn("text-[15px] px-4 py-3 min-h-[100px]", props.className)} />;
-}
-
-// ─── Step components ───────────────────────────────────────
-
-function Step1({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  return (
-    <div className="space-y-8">
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-        <p className="text-sm text-blue-800">
-          Instrument 1 is completed once at registration. Please fill out all sections to help your care team onboard you safely.
-        </p>
-      </div>
-
-      <div className="space-y-6">
-        <SectionHeading>Part 1 — Personal Information</SectionHeading>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label="Legal First Name" required>
-            <BigInput value={d.legalFirstName} onChange={e => u({ legalFirstName: e.target.value })} placeholder="First name" />
-          </FormField>
-          <FormField label="Legal Last Name" required>
-            <BigInput value={d.legalLastName} onChange={e => u({ legalLastName: e.target.value })} placeholder="Last name" />
-          </FormField>
-        </div>
-        <FormField label="Preferred Name (if different)">
-          <BigInput value={d.preferredName} onChange={e => u({ preferredName: e.target.value })} placeholder="Nickname or preferred name" />
-        </FormField>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label="Date of Birth" required>
-            <DatePicker value={d.birthdate} onChange={v => u({ birthdate: v })} placeholder="Select date of birth" />
-          </FormField>
-          <FormField label="Alberta Personal Health Number (PHN)" required>
-            <BigInput value={d.healthCareNumber} onChange={e => u({ healthCareNumber: e.target.value })} placeholder="PHN" />
-          </FormField>
-        </div>
-
-        <FormField label="Sex assigned at birth">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { value: "male", label: "Male" },
-              { value: "female", label: "Female" },
-              { value: "intersex", label: "Intersex" },
-              { value: "prefer-not-to-say", label: "Prefer not to say" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.sexAssignedAtBirth === option.value}
-                onSelect={v => u({ sexAssignedAtBirth: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-
-        <FormField label="Gender identity">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { value: "man", label: "Man" },
-              { value: "woman", label: "Woman" },
-              { value: "non-binary", label: "Non-binary" },
-              { value: "prefer-not-to-say", label: "Prefer not to say" },
-              { value: "self-describe", label: "Prefer to self-describe" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.genderIdentity === option.value}
-                onSelect={v => u({ genderIdentity: v })}
-              />
-            ))}
-          </div>
-          {d.genderIdentity === "self-describe" && (
-            <BigInput value={d.genderIdentityOther} onChange={e => u({ genderIdentityOther: e.target.value })} placeholder="Self-described gender identity" className="mt-3" />
-          )}
-        </FormField>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-6">
-        <SectionHeading>Part 2 — Contact Information</SectionHeading>
-        <FormField label="Home Address">
-          <BigInput value={d.addressStreet} onChange={e => u({ addressStreet: e.target.value })} placeholder="Street address" />
-        </FormField>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <FormField label="City">
-            <BigInput value={d.addressCity} onChange={e => u({ addressCity: e.target.value })} placeholder="City" />
-          </FormField>
-          <FormField label="Province">
-            <BigInput value={d.addressProvince} onChange={e => u({ addressProvince: e.target.value })} placeholder="Province" />
-          </FormField>
-          <FormField label="Postal Code">
-            <BigInput value={d.addressPostalCode} onChange={e => u({ addressPostalCode: e.target.value })} placeholder="Postal code" />
-          </FormField>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label="Primary Phone">
-            <BigInput type="tel" value={d.primaryPhone} onChange={e => u({ primaryPhone: e.target.value })} placeholder="Phone number" />
-          </FormField>
-          <FormField label="Email Address">
-            <BigInput type="email" value={d.email} onChange={e => u({ email: e.target.value })} placeholder="Email address" />
-          </FormField>
-        </div>
-        <FormField label="Preferred contact method">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { value: "phone", label: "Phone call" },
-              { value: "sms", label: "SMS/Text" },
-              { value: "email", label: "Email" },
-              { value: "portal", label: "Portal notification" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.contactMethod === option.value}
-                onSelect={v => u({ contactMethod: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-        <FormField label="Preferred language">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { value: "english", label: "English" },
-              { value: "french", label: "French" },
-              { value: "other", label: "Other" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.preferredLanguage === option.value}
-                onSelect={v => u({ preferredLanguage: v })}
-              />
-            ))}
-          </div>
-          {d.preferredLanguage === "other" && (
-            <BigInput value={d.preferredLanguageOther} onChange={e => u({ preferredLanguageOther: e.target.value })} placeholder="Preferred language" className="mt-3" />
-          )}
-        </FormField>
-        <FormField label="Interpreter required">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { value: "yes", label: "Yes" },
-              { value: "no", label: "No" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.interpreterRequired === option.value}
-                onSelect={v => u({ interpreterRequired: v })}
-              />
-            ))}
-          </div>
-          {d.interpreterRequired === "yes" && (
-            <BigInput value={d.interpreterLanguage} onChange={e => u({ interpreterLanguage: e.target.value })} placeholder="Interpreter language" className="mt-3" />
-          )}
-        </FormField>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-6">
-        <SectionHeading>Part 3 — Emergency Contact & Substitute Decision Maker</SectionHeading>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <FormField label="Emergency Contact Name">
-            <BigInput value={d.emergencyContactName} onChange={e => u({ emergencyContactName: e.target.value })} placeholder="Contact name" />
-          </FormField>
-          <FormField label="Relationship">
-            <BigInput value={d.emergencyContactRelationship} onChange={e => u({ emergencyContactRelationship: e.target.value })} placeholder="Relationship" />
-          </FormField>
-          <FormField label="Phone">
-            <BigInput value={d.emergencyContactPhone} onChange={e => u({ emergencyContactPhone: e.target.value })} placeholder="Contact phone" />
-          </FormField>
-        </div>
-        <FormField label="Is this person also your Substitute Decision Maker (SDM)?">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { value: "yes", label: "Yes" },
-              { value: "no", label: "No" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.emergencyContactIsSDM === option.value}
-                onSelect={v => u({ emergencyContactIsSDM: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-        <FormField label="Do you have a Personal Directive or Enduring Power of Attorney on file?">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { value: "yes", label: "Yes" },
-              { value: "no", label: "No" },
-              { value: "in-progress", label: "In progress" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.directiveStatus === option.value}
-                onSelect={v => u({ directiveStatus: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-6">
-        <SectionHeading>Part 4 — Referring Clinician & Care Team</SectionHeading>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label="Referring Physician Name">
-            <BigInput value={d.referringPhysicianName} onChange={e => u({ referringPhysicianName: e.target.value })} placeholder="Physician name" />
-          </FormField>
-          <FormField label="Referring Clinic / Practice">
-            <BigInput value={d.referringClinic} onChange={e => u({ referringClinic: e.target.value })} placeholder="Clinic or practice" />
-          </FormField>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <FormField label="Physician Phone">
-            <BigInput value={d.referringPhysicianPhone} onChange={e => u({ referringPhysicianPhone: e.target.value })} placeholder="Phone" />
-          </FormField>
-          <FormField label="Physician Fax">
-            <BigInput value={d.referringPhysicianFax} onChange={e => u({ referringPhysicianFax: e.target.value })} placeholder="Fax" />
-          </FormField>
-          <FormField label="Date of Referral">
-            <DatePicker value={d.referralDate} onChange={v => u({ referralDate: v })} placeholder="Referral date" />
-          </FormField>
-        </div>
-        <FormField label="Do you have a family physician / primary care provider?">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { value: "yes", label: "Yes" },
-              { value: "no", label: "No" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.hasFamilyPhysician === option.value}
-                onSelect={v => u({ hasFamilyPhysician: v })}
-              />
-            ))}
-          </div>
-          {d.hasFamilyPhysician === "yes" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
-              <FormField label="Family Physician Name">
-                <BigInput value={d.familyPhysicianName} onChange={e => u({ familyPhysicianName: e.target.value })} placeholder="Provider name" />
-              </FormField>
-              <FormField label="Family Physician Clinic">
-                <BigInput value={d.familyPhysicianClinic} onChange={e => u({ familyPhysicianClinic: e.target.value })} placeholder="Clinic name" />
-              </FormField>
-            </div>
-          )}
-        </FormField>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-6">
-        <SectionHeading>Part 5 — Joint & Condition Information</SectionHeading>
-        <FormField label="Which joint(s) are you being referred for?">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <BigCheckbox id="hip" checked={d.jointHip} onCheckedChange={v => u({ jointHip: v })} label="Left Hip" />
-            <BigCheckbox id="knee" checked={d.jointKnee} onCheckedChange={v => u({ jointKnee: v })} label="Right Hip" />
-            <BigCheckbox id="other" checked={d.jointOther} onCheckedChange={v => u({ jointOther: v })} label="Other" />
-          </div>
-          {d.jointOther && (
-            <BigInput value={d.jointOtherText} onChange={e => u({ jointOtherText: e.target.value })} placeholder="Please specify" className="mt-3" />
-          )}
-        </FormField>
-
-        <FormField label="How long have you had symptoms in this joint?">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { value: "<3months", label: "Less than 3 months" },
-              { value: "3-6months", label: "3–6 months" },
-              { value: "6-12months", label: "6–12 months" },
-              { value: "1-2years", label: "1–2 years" },
-              { value: "more-2years", label: "More than 2 years" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.symptomDuration === option.value}
-                onSelect={v => u({ symptomDuration: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-
-        <FormField label="Have you ever had surgery on this joint before?">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { value: "no", label: "No" },
-              { value: "yes", label: "Yes — please describe" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.priorJointSurgery === option.value}
-                onSelect={v => u({ priorJointSurgery: v })}
-              />
-            ))}
-          </div>
-          {d.priorJointSurgery === "yes" && (
-            <BigTextarea value={d.priorJointSurgeryDetails} onChange={e => u({ priorJointSurgeryDetails: e.target.value })} placeholder="Describe previous joint surgery" className="mt-3" />
-          )}
-        </FormField>
-
-        <FormField label="Have you had imaging done for this joint?">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <BigCheckbox id="imaging-no" checked={d.imagingNo} onCheckedChange={v => u({ imagingNo: v, imagingXray: v ? false : d.imagingXray, imagingMRI: v ? false : d.imagingMRI, imagingCT: v ? false : d.imagingCT, imagingUltrasound: v ? false : d.imagingUltrasound })} label="No" />
-            <BigCheckbox id="imaging-xray" checked={d.imagingXray} onCheckedChange={v => u({ imagingXray: v, imagingNo: v ? false : d.imagingNo })} label="X-ray" />
-            <BigCheckbox id="imaging-mri" checked={d.imagingMRI} onCheckedChange={v => u({ imagingMRI: v, imagingNo: v ? false : d.imagingNo })} label="MRI" />
-            <BigCheckbox id="imaging-ct" checked={d.imagingCT} onCheckedChange={v => u({ imagingCT: v, imagingNo: v ? false : d.imagingNo })} label="CT Scan" />
-            <BigCheckbox id="imaging-ultrasound" checked={d.imagingUltrasound} onCheckedChange={v => u({ imagingUltrasound: v, imagingNo: v ? false : d.imagingNo })} label="Ultrasound" />
-          </div>
-          {(d.imagingXray || d.imagingMRI || d.imagingCT || d.imagingUltrasound) && (
-            <BigTextarea value={d.imagingWhereWhen} onChange={e => u({ imagingWhereWhen: e.target.value })} placeholder="If yes, where and when?" className="mt-3" />
-          )}
-        </FormField>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-6">
-        <SectionHeading>Part 6 — General Medical History</SectionHeading>
-        <p className="text-sm text-muted-foreground">Select all conditions that apply.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {[
-            { key: "diabetes", label: "Diabetes (Type 1 or 2)" },
-            { key: "highBloodPressure", label: "High blood pressure" },
-            { key: "heartDisease", label: "Heart disease or previous heart attack" },
-            { key: "stroke", label: "Stroke or TIA" },
-            { key: "kidneyDisease", label: "Chronic kidney disease" },
-            { key: "lungDisease", label: "Chronic lung disease (COPD, asthma)" },
-            { key: "bloodClots", label: "Blood clots (DVT or PE)" },
-            { key: "cancer", label: "Active cancer or history of cancer" },
-            { key: "obesity", label: "Obesity (BMI > 35)" },
-            { key: "mentalHealth", label: "Depression or anxiety disorder" },
-            { key: "rheumatoidArthritis", label: "Rheumatoid arthritis or inflammatory arthritis" },
-            { key: "osteoporosis", label: "Osteoporosis" },
-            { key: "none", label: "None of the above" },
-          ].map(option => (
-            <BigCheckbox
-              key={option.key}
-              id={option.key}
-              checked={d.medicalConditions[option.key as keyof typeof d.medicalConditions]}
-              onCheckedChange={v => u({ medicalConditions: { ...d.medicalConditions, [option.key]: v } })}
-              label={option.label}
-            />
-          ))}
-        </div>
-        <FormField label="Current medications">
-          <BigTextarea value={d.currentMedications} onChange={e => u({ currentMedications: e.target.value })} placeholder="List medications or attach medication list" />
-        </FormField>
-        <FormField label="Known allergies">
-          <BigInput value={d.knownAllergies} onChange={e => u({ knownAllergies: e.target.value })} placeholder="Allergies" />
-        </FormField>
-        <FormField label="Do you currently smoke?">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { value: "no", label: "No" },
-              { value: "yes", label: "Yes — packs/day" },
-              { value: "former", label: "Former smoker" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.smokingStatus === option.value}
-                onSelect={v => u({ smokingStatus: v })}
-              />
-            ))}
-          </div>
-          {d.smokingStatus === "yes" && (
-            <BigInput value={d.smokingPacksPerDay} onChange={e => u({ smokingPacksPerDay: e.target.value })} placeholder="Packs per day" className="mt-3" />
-          )}
-          {d.smokingStatus === "former" && (
-            <BigInput value={d.smokingQuitDate} onChange={e => u({ smokingQuitDate: e.target.value })} placeholder="Quit date" className="mt-3" />
-          )}
-        </FormField>
-        <FormField label="Do you consume alcohol regularly?">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { value: "no", label: "No" },
-              { value: "yes", label: "Yes" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.alcoholRegular === option.value}
-                onSelect={v => u({ alcoholRegular: v })}
-              />
-            ))}
-          </div>
-          {d.alcoholRegular === "yes" && (
-            <BigInput value={d.alcoholDrinksPerWeek} onChange={e => u({ alcoholDrinksPerWeek: e.target.value })} placeholder="Drinks per week" className="mt-3" />
-          )}
-        </FormField>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-6">
-        <SectionHeading>Part 7 — Social & Logistical Context</SectionHeading>
-        <FormField label="Where do you live?">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { value: "city", label: "Within a city or large town" },
-              { value: "town", label: "Small town or rural community" },
-              { value: "remote", label: "Remote / very rural" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.livingLocation === option.value}
-                onSelect={v => u({ livingLocation: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-        <FormField label="Do you live alone?">
-          <YesNoToggle value={d.liveAlone} onChange={v => u({ liveAlone: v })} />
-        </FormField>
-        <FormField label="Do you have someone who could help you recover at home after surgery?">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { value: "yes", label: "Yes" },
-              { value: "no", label: "No" },
-              { value: "unsure", label: "Unsure" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.caregiverHelp === option.value}
-                onSelect={v => u({ caregiverHelp: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-        <FormField label="Do you have reliable transportation to attend appointments?">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { value: "yes", label: "Yes" },
-              { value: "no", label: "No" },
-              { value: "sometimes", label: "Sometimes" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.transportationReliable === option.value}
-                onSelect={v => u({ transportationReliable: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-        <FormField label="Are you currently employed?">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { value: "full-time", label: "Yes, full time" },
-              { value: "part-time", label: "Yes, part time" },
-              { value: "no", label: "No" },
-              { value: "retired", label: "Retired" },
-              { value: "prefer-not-to-say", label: "Prefer not to say" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.employmentStatus === option.value}
-                onSelect={v => u({ employmentStatus: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-        <FormField label="Is there anything that might prevent you from having surgery in the next 6 months?">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { value: "no", label: "No" },
-              { value: "yes", label: "Yes — please describe" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.surgeryBarrier === option.value}
-                onSelect={v => u({ surgeryBarrier: v })}
-              />
-            ))}
-          </div>
-          {d.surgeryBarrier === "yes" && (
-            <BigTextarea value={d.surgeryBarrierDetails} onChange={e => u({ surgeryBarrierDetails: e.target.value })} placeholder="Describe any barriers" className="mt-3" />
-          )}
-        </FormField>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-6">
-        <SectionHeading>Part 8 — Consent & Privacy</SectionHeading>
-        <FormField label="I consent to CareQ collecting, storing, and using my health information for care coordination and waitlist management.">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { value: "yes", label: "I agree" },
-              { value: "no", label: "I do not agree" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.consentData === option.value}
-                onSelect={v => u({ consentData: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-        <FormField label="I consent to receiving electronic communications from CareQ.">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { value: "yes", label: "I agree" },
-              { value: "no", label: "I do not agree" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.consentElectronic === option.value}
-                onSelect={v => u({ consentElectronic: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-        <FormField label="I consent to my information being shared with my referring physician and surgical care team.">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { value: "yes", label: "I agree" },
-              { value: "no", label: "I do not agree" },
-            ].map(option => (
-              <BigRadioOption
-                key={option.value}
-                value={option.value}
-                label={option.label}
-                selected={d.consentShare === option.value}
-                onSelect={v => u({ consentShare: v })}
-              />
-            ))}
-          </div>
-        </FormField>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label="Signature">
-            <BigInput value={d.signature} onChange={e => u({ signature: e.target.value })} placeholder="Your full name" />
-          </FormField>
-          <FormField label="Date">
-            <DatePicker value={d.signatureDate} onChange={v => u({ signatureDate: v })} placeholder="Signature date" />
-          </FormField>
-        </div>
-        <FormField label="If completed on behalf of patient by SDM or caregiver, please indicate name and relationship">
-          <BigTextarea value={d.completedByName} onChange={e => u({ completedByName: e.target.value })} placeholder="Name and relationship" />
-          <BigInput value={d.completedByRelationship} onChange={e => u({ completedByRelationship: e.target.value })} placeholder="Relationship" className="mt-3" />
-        </FormField>
-      </div>
-    </div>
-  );
-}
-
-function Step2({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  return (
-    <div className="space-y-8">
-      <FormField label="Which joint(s) are you coming to see us for?">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <BigCheckbox id="hip" checked={d.jointHip} onCheckedChange={v => u({ jointHip: v })} label="Hip" />
-          <BigCheckbox id="knee" checked={d.jointKnee} onCheckedChange={v => u({ jointKnee: v })} label="Knee" />
-          <BigCheckbox id="other" checked={d.jointOther} onCheckedChange={v => u({ jointOther: v })} label="Other" />
-        </div>
-        {d.jointOther && (
-          <BigInput value={d.jointOtherText} onChange={e => u({ jointOtherText: e.target.value })} placeholder="Please specify..." className="mt-3" />
-        )}
-      </FormField>
-
-      <FormField label="Which side bothers you more?">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {["Right", "Left", "Both"].map(v => (
-            <BigRadioOption key={v} value={v.toLowerCase()} label={v} selected={d.side === v.toLowerCase()} onSelect={v => u({ side: v })} />
-          ))}
-        </div>
-      </FormField>
-
-      <FormField label="Have you had any previous injuries to the affected joint(s)?">
-        <BigTextarea value={d.previousInjuries} onChange={e => u({ previousInjuries: e.target.value })} placeholder="Please describe any previous injuries..." />
-      </FormField>
-
-      <FormField label="Which walking aids do you currently use?">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {["None", "Cane/Stick", "Walker", "Wheelchair"].map(v => (
-            <BigRadioOption key={v} value={v.toLowerCase()} label={v} selected={d.walkingAid === v.toLowerCase()} onSelect={v => u({ walkingAid: v })} />
-          ))}
-        </div>
-      </FormField>
-
-      <FormField label="How long can you walk without stopping?">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <BigRadioOption value="<2blocks" label="Less than 2 blocks (about 5 min)" selected={d.walkingDistance === "<2blocks"} onSelect={v => u({ walkingDistance: v })} />
-          <BigRadioOption value="2-5blocks" label="2 to 5 blocks (5-10 min)" selected={d.walkingDistance === "2-5blocks"} onSelect={v => u({ walkingDistance: v })} />
-          <BigRadioOption value="0.5-1km" label="Half to 1 km (10-20 min)" selected={d.walkingDistance === "0.5-1km"} onSelect={v => u({ walkingDistance: v })} />
-          <BigRadioOption value=">2km" label="More than 2 km (30+ min)" selected={d.walkingDistance === ">2km"} onSelect={v => u({ walkingDistance: v })} />
-        </div>
-      </FormField>
-
-      <FormField label="Does your joint pain wake you from sleep?">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {["Never", "Occasionally", "Often", "Almost always"].map(v => (
-            <BigRadioOption key={v} value={v.toLowerCase()} label={v} selected={d.painWakesSleep === v.toLowerCase()} onSelect={v => u({ painWakesSleep: v })} />
-          ))}
-        </div>
-      </FormField>
-
-      <FormField label="What activities does your hip/knee keep you from doing?" hint="e.g. Recreation, stairs, kneeling">
-        <BigTextarea value={d.limitedActivities} onChange={e => u({ limitedActivities: e.target.value })} placeholder="List activities you have difficulty with..." />
-      </FormField>
-    </div>
-  );
-}
-
-function Step3({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  return (
-    <div className="space-y-6">
-      <p className="text-[15px] text-muted-foreground">Select what you have tried for managing your hip/knee pain:</p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <BigCheckbox id="physio" checked={d.triedPhysiotherapy} onCheckedChange={v => u({ triedPhysiotherapy: v })} label="Physiotherapy" />
-        <BigCheckbox id="bracing" checked={d.triedBracing} onCheckedChange={v => u({ triedBracing: v })} label="Bracing" />
-      </div>
-
-      <div className="space-y-4">
-        <BigCheckbox id="anti" checked={d.triedAntiInflammatories} onCheckedChange={v => u({ triedAntiInflammatories: v })} label="Anti-inflammatories" />
-        {d.triedAntiInflammatories && (
-          <BigInput value={d.antiInflammatoriesDetails} onChange={e => u({ antiInflammatoriesDetails: e.target.value })} placeholder="Which ones? e.g. Ibuprofen, Naproxen..." />
-        )}
-      </div>
-
-      <div className="space-y-4">
-        <BigCheckbox id="otherpain" checked={d.triedOtherPainMed} onCheckedChange={v => u({ triedOtherPainMed: v })} label="Other Pain Medication" />
-        {d.triedOtherPainMed && (
-          <BigInput value={d.otherPainMedDetails} onChange={e => u({ otherPainMedDetails: e.target.value })} placeholder="Which medications?" />
-        )}
-      </div>
-
-      <div className="space-y-4">
-        <BigCheckbox id="injections" checked={d.triedInjections} onCheckedChange={v => u({ triedInjections: v })} label="Injections" />
-        {d.triedInjections && (
-          <BigInput value={d.injectionsDetails} onChange={e => u({ injectionsDetails: e.target.value })} placeholder="What type of injections?" />
-        )}
-      </div>
-
-      <div className="space-y-4">
-        <BigCheckbox id="otherTreat" checked={d.triedOther} onCheckedChange={v => u({ triedOther: v })} label="Other treatments" />
-        {d.triedOther && (
-          <BigInput value={d.otherDetails} onChange={e => u({ otherDetails: e.target.value })} placeholder="Please describe..." />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Step4({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  const updateAllergy = (i: number, field: keyof AllergyEntry, val: string) => {
-    const next = [...d.allergies];
-    next[i] = { ...next[i], [field]: val };
-    u({ allergies: next });
-  };
-  const addAllergy = () => u({ allergies: [...d.allergies, { allergy: "", reaction: "" }] });
-  const removeAllergy = (i: number) => {
-    if (d.allergies.length <= 1) return;
-    u({ allergies: d.allergies.filter((_, idx) => idx !== i) });
-  };
-
-  return (
-    <div className="space-y-6">
-      <p className="text-[15px] text-muted-foreground">Please be specific with your allergic reactions.</p>
-
-      <div className="space-y-4">
-        {d.allergies.map((a, i) => (
-          <div key={i} className="flex gap-3 items-start">
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm text-muted-foreground mb-1.5 block">Allergy</Label>
-                <BigInput value={a.allergy} onChange={e => updateAllergy(i, "allergy", e.target.value)} placeholder="e.g. Penicillin" />
-              </div>
-              <div>
-                <Label className="text-sm text-muted-foreground mb-1.5 block">Reaction</Label>
-                <BigInput value={a.reaction} onChange={e => updateAllergy(i, "reaction", e.target.value)} placeholder="e.g. Hives, swelling" />
-              </div>
-            </div>
-            {d.allergies.length > 1 && (
-              <button type="button" onClick={() => removeAllergy(i)} className="mt-7 p-2 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-red-50">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        ))}
-        <Button type="button" variant="outline" onClick={addAllergy} className="h-11 text-[15px]">
-          <Plus className="w-4 h-4 mr-2" /> Add Another Allergy
-        </Button>
-      </div>
-
-      <Separator />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <FormField label="Do you have a metal allergy?">
-          <YesNoToggle value={d.metalAllergy} onChange={v => u({ metalAllergy: v })} />
-        </FormField>
-        <FormField label="Do you have a latex allergy?">
-          <YesNoToggle value={d.latexAllergy} onChange={v => u({ latexAllergy: v })} />
-        </FormField>
-      </div>
-    </div>
-  );
-}
-
-function Step5({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  const updateSurgery = (i: number, field: keyof SurgeryEntry, val: string) => {
-    const next = [...d.surgeries];
-    next[i] = { ...next[i], [field]: val };
-    u({ surgeries: next });
-  };
-  const addSurgery = () => u({ surgeries: [...d.surgeries, { what: "", when: "", location: "" }] });
-  const removeSurgery = (i: number) => {
-    if (d.surgeries.length <= 1) return;
-    u({ surgeries: d.surgeries.filter((_, idx) => idx !== i) });
-  };
-
-  return (
-    <div className="space-y-6">
-      <p className="text-[15px] text-muted-foreground">If you are unsure about a date or location, please estimate.</p>
-
-      <div className="space-y-4">
-        {d.surgeries.map((s, i) => (
-          <div key={i} className="bg-muted/30 rounded-xl border border-border/50 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Surgery {i + 1}</span>
-              {d.surgeries.length > 1 && (
-                <button type="button" onClick={() => removeSurgery(i)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-red-50">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <BigInput value={s.what} onChange={e => updateSurgery(i, "what", e.target.value)} placeholder="What surgery?" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <BigInput type="text" value={s.when} onChange={e => updateSurgery(i, "when", e.target.value)} placeholder="When? (approx. year)" />
-              <BigInput value={s.location} onChange={e => updateSurgery(i, "location", e.target.value)} placeholder="Location / Surgeon name" />
-            </div>
-          </div>
-        ))}
-        <Button type="button" variant="outline" onClick={addSurgery} className="h-11 text-[15px]">
-          <Plus className="w-4 h-4 mr-2" /> Add Another Surgery
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function Step6({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  const toggleTest = (i: number) => {
-    const next = [...d.tests];
-    next[i] = { ...next[i], checked: !next[i].checked };
-    u({ tests: next });
-  };
-  const updateTest = (i: number, field: "date" | "location", val: string) => {
-    const next = [...d.tests];
-    next[i] = { ...next[i], [field]: val };
-    u({ tests: next });
-  };
-
-  return (
-    <div className="space-y-4">
-      <p className="text-[15px] text-muted-foreground">Check any tests you have had. If unsure about a date, please estimate.</p>
-
-      {d.tests.map((t, i) => (
-        <div key={i} className={cn(
-          "rounded-xl border-2 transition-all",
-          t.checked ? "border-primary/30 bg-primary/[0.02]" : "border-border bg-white"
-        )}>
-          <button
-            type="button"
-            onClick={() => toggleTest(i)}
-            className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
-          >
-            <div className={cn(
-              "w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-colors",
-              t.checked ? "border-primary bg-primary" : "border-muted-foreground/40"
-            )}>
-              {t.checked && <Check className="w-3 h-3 text-white" />}
-            </div>
-            <span className="text-[15px] font-medium">{t.name}</span>
-          </button>
-          {t.checked && (
-            <div className="px-4 pb-4 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm text-muted-foreground mb-1.5 block">Date (approximate)</Label>
-                <BigInput type="text" value={t.date} onChange={e => updateTest(i, "date", e.target.value)} placeholder="e.g. 2023 or Jan 2024" />
-              </div>
-              <div>
-                <Label className="text-sm text-muted-foreground mb-1.5 block">Location</Label>
-                <BigInput value={t.location} onChange={e => updateTest(i, "location", e.target.value)} placeholder="Hospital or clinic name" />
-              </div>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Step7({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  return (
-    <div className="space-y-8">
-      {/* Tobacco */}
-      <div className="space-y-4">
-        <SectionHeading>Tobacco Use</SectionHeading>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <BigRadioOption value="never" label="Never used" selected={d.tobaccoUse === "never"} onSelect={v => u({ tobaccoUse: v })} />
-          <BigRadioOption value="quit" label="I quit" selected={d.tobaccoUse === "quit"} onSelect={v => u({ tobaccoUse: v })} />
-          <BigRadioOption value="yes" label="Currently use" selected={d.tobaccoUse === "yes"} onSelect={v => u({ tobaccoUse: v })} />
-        </div>
-
-        {d.tobaccoUse === "quit" && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
-            <FormField label="When did you quit?">
-              <BigInput value={d.tobaccoQuitDate} onChange={e => u({ tobaccoQuitDate: e.target.value })} placeholder="e.g. 2019" />
-            </FormField>
-            <FormField label="How many years did you use?">
-              <BigInput value={d.tobaccoYears} onChange={e => u({ tobaccoYears: e.target.value })} placeholder="e.g. 10" />
-            </FormField>
-            <FormField label="Amount per day?">
-              <BigInput value={d.tobaccoAmountPerDay} onChange={e => u({ tobaccoAmountPerDay: e.target.value })} placeholder="e.g. 5" />
-            </FormField>
-          </div>
-        )}
-
-        {d.tobaccoUse === "yes" && (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <BigCheckbox id="cig" checked={d.tobaccoTypes.cigarettes} onCheckedChange={v => u({ tobaccoTypes: { ...d.tobaccoTypes, cigarettes: v } })} label="Cigarettes" />
-              <BigCheckbox id="cigar" checked={d.tobaccoTypes.cigars} onCheckedChange={v => u({ tobaccoTypes: { ...d.tobaccoTypes, cigars: v } })} label="Cigars" />
-              <BigCheckbox id="vape" checked={d.tobaccoTypes.vape} onCheckedChange={v => u({ tobaccoTypes: { ...d.tobaccoTypes, vape: v } })} label="Vape" />
-              <BigCheckbox id="chew" checked={d.tobaccoTypes.chew} onCheckedChange={v => u({ tobaccoTypes: { ...d.tobaccoTypes, chew: v } })} label="Chew/Spit" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <FormField label="How many years?">
-                <BigInput value={d.tobaccoYears} onChange={e => u({ tobaccoYears: e.target.value })} placeholder="e.g. 10" />
-              </FormField>
-              <FormField label="Amount per day?">
-                <BigInput value={d.tobaccoAmountPerDay} onChange={e => u({ tobaccoAmountPerDay: e.target.value })} placeholder="e.g. 5" />
-              </FormField>
-            </div>
-          </>
-        )}
-      </div>
-
-      <Separator />
-
-      {/* Alcohol */}
-      <div className="space-y-4">
-        <SectionHeading>Alcohol Use</SectionHeading>
-        <FormField label="Do you drink alcohol?">
-          <YesNoToggle value={d.alcoholUse} onChange={v => u({ alcoholUse: v })} />
-        </FormField>
-        {d.alcoholUse === "yes" && (
-          <>
-            <FormField label="Number of drinks per week">
-              <BigInput type="number" value={d.alcoholDrinksPerWeek} onChange={e => u({ alcoholDrinksPerWeek: e.target.value })} placeholder="e.g. 5" />
-            </FormField>
-            <div className="grid grid-cols-3 gap-3">
-              <BigCheckbox id="beer" checked={d.alcoholTypes.beer} onCheckedChange={v => u({ alcoholTypes: { ...d.alcoholTypes, beer: v } })} label="Beer" />
-              <BigCheckbox id="wine" checked={d.alcoholTypes.wine} onCheckedChange={v => u({ alcoholTypes: { ...d.alcoholTypes, wine: v } })} label="Wine" />
-              <BigCheckbox id="liquor" checked={d.alcoholTypes.liquor} onCheckedChange={v => u({ alcoholTypes: { ...d.alcoholTypes, liquor: v } })} label="Liquor" />
-            </div>
-          </>
-        )}
-      </div>
-
-      <Separator />
-
-      {/* Drug Use */}
-      <div className="space-y-4">
-        <SectionHeading>Drug Use</SectionHeading>
-        <FormField label="Have you used marijuana or recreational drugs in the last two years?">
-          <YesNoToggle value={d.drugUse} onChange={v => u({ drugUse: v })} />
-        </FormField>
-      </div>
-
-      <Separator />
-
-      {/* Language */}
-      <div className="space-y-4">
-        <SectionHeading>Language Spoken</SectionHeading>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <BigRadioOption value="english" label="English" selected={d.language === "english"} onSelect={v => u({ language: v })} />
-          <BigRadioOption value="other" label="Other" selected={d.language === "other"} onSelect={v => u({ language: v })} />
-        </div>
-        {d.language === "other" && (
-          <BigInput value={d.languageOther} onChange={e => u({ languageOther: e.target.value })} placeholder="Which language?" />
-        )}
-      </div>
-
-      <Separator />
-
-      {/* Personal Directive */}
-      <div className="space-y-4">
-        <SectionHeading>Personal Directive</SectionHeading>
-        <FormField label="Do you have a personal directive?">
-          <YesNoToggle value={d.personalDirective} onChange={v => u({ personalDirective: v })} />
-        </FormField>
-        {d.personalDirective === "yes" && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-            <p className="text-sm text-blue-800">
-              Please bring a copy of your personal directive to your next appointment.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Step8({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  const updateFamily = (i: number, field: keyof FamilyEntry, val: string) => {
-    const next = [...d.familyHistory];
-    next[i] = { ...next[i], [field]: val };
-    u({ familyHistory: next });
-  };
-  const addFamily = () => u({ familyHistory: [...d.familyHistory, { who: "", what: "" }] });
-  const removeFamily = (i: number) => {
-    if (d.familyHistory.length <= 1) return;
-    u({ familyHistory: d.familyHistory.filter((_, idx) => idx !== i) });
-  };
-
-  return (
-    <div className="space-y-8">
-      {/* Family Medical History */}
-      <div className="space-y-4">
-        <SectionHeading>Family Medical History</SectionHeading>
-        <p className="text-[15px] text-muted-foreground">Parents or siblings — e.g. cancer, stroke, heart disease, diabetes</p>
-
-        {d.familyHistory.map((f, i) => (
-          <div key={i} className="flex gap-3 items-start">
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <BigInput value={f.who} onChange={e => updateFamily(i, "who", e.target.value)} placeholder="Who? (e.g. Mother)" />
-              <BigInput value={f.what} onChange={e => updateFamily(i, "what", e.target.value)} placeholder="What condition?" />
-            </div>
-            {d.familyHistory.length > 1 && (
-              <button type="button" onClick={() => removeFamily(i)} className="mt-1 p-2 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-red-50">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        ))}
-        <Button type="button" variant="outline" onClick={addFamily} className="h-11 text-[15px]">
-          <Plus className="w-4 h-4 mr-2" /> Add Another Entry
-        </Button>
-      </div>
-
-      <Separator />
-
-      {/* Anesthetic History */}
-      <div className="space-y-4">
-        <SectionHeading>Anesthetic History</SectionHeading>
-        <p className="text-[15px] text-muted-foreground">Check all that apply:</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <BigCheckbox id="aGen" checked={d.anestheticGeneral} onCheckedChange={v => u({ anestheticGeneral: v })} label="Previous General Anesthetic" />
-          <BigCheckbox id="aComp" checked={d.anestheticComplications} onCheckedChange={v => u({ anestheticComplications: v })} label="Complications from anesthetic (self or family)" />
-          <BigCheckbox id="aSpinal" checked={d.anestheticSpinal} onCheckedChange={v => u({ anestheticSpinal: v })} label="Previous Spinal Anesthetic" />
-          <BigCheckbox id="aNausea" checked={d.anestheticNausea} onCheckedChange={v => u({ anestheticNausea: v })} label="Nausea/vomiting after surgery" />
-          <BigCheckbox id="aLocal" checked={d.anestheticLocal} onCheckedChange={v => u({ anestheticLocal: v })} label="Previous Local Anesthetic" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Step9({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  const updateSpec = (i: number, field: keyof SpecialistEntry, val: string) => {
-    const next = [...d.specialists];
-    next[i] = { ...next[i], [field]: val };
-    u({ specialists: next });
-  };
-  const addSpec = () => u({ specialists: [...d.specialists, { type: "", name: "", date: "", location: "" }] });
-  const removeSpec = (i: number) => {
-    if (d.specialists.length <= 1) return;
-    u({ specialists: d.specialists.filter((_, idx) => idx !== i) });
-  };
-
-  return (
-    <div className="space-y-6">
-      <p className="text-[15px] text-muted-foreground">Specialist assessments in the last 5 years. Only fill in specialists you have seen.</p>
-
-      {d.specialists.map((s, i) => (
-        <div key={i} className="bg-muted/30 rounded-xl border border-border/50 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
-              {s.type || `Specialist ${i + 1}`}
-            </span>
-            {d.specialists.length > 1 && i >= 3 && (
-              <button type="button" onClick={() => removeSpec(i)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-red-50">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          {i >= 3 && (
-            <BigInput value={s.type} onChange={e => updateSpec(i, "type", e.target.value)} placeholder="Specialist type" />
-          )}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <BigInput value={s.name} onChange={e => updateSpec(i, "name", e.target.value)} placeholder="Doctor name" />
-            <BigInput type="text" value={s.date} onChange={e => updateSpec(i, "date", e.target.value)} placeholder="Date (YYYY-MM-DD)" />
-            <BigInput value={s.location} onChange={e => updateSpec(i, "location", e.target.value)} placeholder="Location" />
-          </div>
-        </div>
-      ))}
-      <Button type="button" variant="outline" onClick={addSpec} className="h-11 text-[15px]">
-        <Plus className="w-4 h-4 mr-2" /> Add Another Specialist
-      </Button>
-    </div>
-  );
-}
-
-function Step10({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  return (
-    <div className="space-y-8">
-      {/* Support After Surgery */}
-      <div className="space-y-4">
-        <SectionHeading>Support After Surgery</SectionHeading>
-        <p className="text-[15px] text-muted-foreground">Who will help you during preparation and recovery?</p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <FormField label="Contact Name">
-            <BigInput value={d.supportName} onChange={e => u({ supportName: e.target.value })} placeholder="e.g. Jane Smith" />
-          </FormField>
-          <FormField label="Relationship">
-            <BigInput value={d.supportRelationship} onChange={e => u({ supportRelationship: e.target.value })} placeholder="e.g. Spouse, Daughter" />
-          </FormField>
-          <FormField label="Phone Number">
-            <BigInput type="tel" value={d.supportPhone} onChange={e => u({ supportPhone: e.target.value })} placeholder="e.g. 403-555-1234" />
-          </FormField>
-        </div>
-
-        <FormField label="Do you live alone?">
-          <YesNoToggle value={d.liveAlone} onChange={v => u({ liveAlone: v })} />
-        </FormField>
-
-        <FormField label="Who will be your caregiver after surgery?">
-          <BigInput value={d.caregiverAfterSurgery} onChange={e => u({ caregiverAfterSurgery: e.target.value })} placeholder="Name of caregiver" />
-        </FormField>
-
-        <FormField label="How long will the caregiver stay after surgery?">
-          <BigInput value={d.caregiverDuration} onChange={e => u({ caregiverDuration: e.target.value })} placeholder="e.g. 2 weeks" />
-        </FormField>
-      </div>
-
-      <Separator />
-
-      {/* Fall Risk */}
-      <div className="space-y-4">
-        <SectionHeading>Fall Risk Assessment</SectionHeading>
-
-        <FormField label="Do you have a history of falls?">
-          <YesNoToggle value={d.fallHistory} onChange={v => u({ fallHistory: v })} />
-        </FormField>
-
-        {d.fallHistory === "yes" && (
-          <>
-            <FormField label="When did you fall?">
-              <BigInput value={d.fallDates} onChange={e => u({ fallDates: e.target.value })} placeholder="Approximate date(s)" />
-            </FormField>
-
-            <FormField label="Did you have any injuries as a result of a fall?">
-              <YesNoToggle value={d.fallInjuries} onChange={v => u({ fallInjuries: v })} />
-            </FormField>
-
-            {d.fallInjuries === "yes" && (
-              <FormField label="Injury details">
-                <BigInput value={d.fallInjuryDetails} onChange={e => u({ fallInjuryDetails: e.target.value })} placeholder="Describe injuries" />
-              </FormField>
-            )}
-          </>
-        )}
-
-        <FormField label="Do you get dizzy or light-headed when you stand up or walk?">
-          <YesNoToggle value={d.dizzyOnStanding} onChange={v => u({ dizzyOnStanding: v })} />
-        </FormField>
-      </div>
-    </div>
-  );
-}
-
-const SYMPTOM_GROUPS = [
+const ALL_QUESTIONS: Q[] = [
+  // ── Patient Registration ─────────────────────────────────────────────────
   {
-    title: "Neurological (Head)",
-    items: [
-      "Problems moving or feeling any part of your body",
-      "Stroke", "Convulsions/Seizures", "Parkinson's", "Multiple Sclerosis",
-      "Polio", "Fainting/Blackouts", "Fibromyalgia", "Memory Loss", "Dementia",
-    ],
+    id: "patient-info", section: "Patient Registration", type: "patient-info",
+    label: "Let's start with your basic information",
+    sublabel: "Legal name, date of birth, and health care number",
   },
   {
-    title: "Respiratory (Lungs)",
-    items: [
-      "Asthma", "Frequent Bronchitis", "Emphysema", "Pneumonia",
-      "Chronic obstructive", "Pulmonary disease (COPD)", "Shortness of breath",
-      "Tuberculosis", "Sleep Apnea", "Snores at night",
-      "Stop breathing at night", "Tired from poor sleep",
-    ],
+    id: "contactMethod", section: "Patient Registration", type: "radio",
+    label: "How would you prefer us to contact you?",
+    opts: ["Phone", "SMS / Text", "Email", "Patient Portal"],
+    field: "contactMethod",
   },
   {
-    title: "Kidney / Urinary",
-    items: [
-      "Kidney Problems", "Prostate Problems", "Previous catheterization",
-      "Postmenopausal", "Seen a Urologist", "Frequent bladder infection",
-      "Difficulty controlling urine", "Incontinence", "Waking up to urinate",
-    ],
+    id: "preferredLanguage", section: "Patient Registration", type: "radio",
+    label: "What is your preferred language?",
+    opts: ["English", "French", "Other"],
+    field: "preferredLanguage",
   },
   {
-    title: "Liver / Endocrine",
-    items: [
-      "Hepatitis", "Liver Problems", "Steroid use (Cortisone/Prednisone)", "Diabetes",
-    ],
+    id: "interpreterRequired", section: "Patient Registration", type: "radio",
+    label: "Do you require an interpreter?",
+    opts: ["Yes", "No"],
+    field: "interpreterRequired",
+    showIf: (d) => d.preferredLanguage !== "" && d.preferredLanguage !== "English",
   },
   {
-    title: "Mental Health",
-    items: ["Depression", "Bipolar", "PTSD", "Schizophrenia", "ADHD"],
+    id: "emergency-contact", section: "Patient Registration", type: "emergency-contact",
+    label: "Emergency contact & advance directive",
+    sublabel: "Who should we contact in an emergency?",
   },
   {
-    title: "Cardio / Vascular (Heart)",
-    items: [
-      "Atrial Fibrillation", "Pacemaker", "Low blood pressure", "High blood pressure",
-      "Heart Attack", "Chest Pain", "Blood clot to lung or leg", "Vascular disease",
-    ],
+    id: "referring", section: "Patient Registration", type: "referring",
+    label: "Referring physician & family doctor",
+    sublabel: "Clinic and contact information",
   },
   {
-    title: "Blood",
-    items: [
-      "HIV/AIDS", "Reaction to blood transfusion", "Blood disorder",
-      "Low blood count/Anemia", "Jehovah Witness",
-    ],
+    id: "hasFamilyPhysician", section: "Patient Registration", type: "radio",
+    label: "Do you have a family physician?",
+    opts: ["Yes", "No"],
+    field: "hasFamilyPhysician",
+  },
+
+  // ── Joint Information ─────────────────────────────────────────────────────
+  {
+    id: "joint-select", section: "Joint Information", type: "joint-select",
+    label: "Which joint(s) are you having problems with?",
+    sublabel: "Select all that apply",
   },
   {
-    title: "Gastrointestinal (Stomach)",
-    items: [
-      "Stomach Problems", "Acid reflux/Heartburn", "Constipation", "Diarrhea",
-      "Irritable bowel", "Recent weight gain/loss", "Crohn's", "Colitis",
-    ],
+    id: "side", section: "Joint Information", type: "radio",
+    label: "Which side is affected?",
+    opts: ["Left", "Right", "Both"],
+    field: "side",
   },
   {
-    title: "Skin",
-    items: ["Open sores or rashes", "Piercing", "Tattoos"],
+    id: "symptomDuration", section: "Joint Information", type: "radio",
+    label: "How long have you had these symptoms?",
+    opts: ["Less than 3 months", "3–6 months", "6–12 months", "1–2 years", "More than 2 years"],
+    field: "symptomDuration",
   },
   {
-    title: "Cancer",
-    items: ["Cancer (self)", "Cancer (family)"],
+    id: "priorJointSurgery", section: "Joint Information", type: "radio",
+    label: "Have you had any prior surgery on this joint?",
+    opts: ["Yes", "No"],
+    field: "priorJointSurgery",
   },
   {
-    title: "Musculoskeletal",
-    items: [
-      "Back Pain", "Osteoarthritis", "Osteoporosis (thin bones)",
-      "Rheumatoid", "Inflammatory Arthritis", "Jaw/Neck Problems",
-      "Cortisone injection", "Chronic pain", "Joint Infection",
-    ],
+    id: "imaging-select", section: "Joint Information", type: "imaging-select",
+    label: "Do you have any imaging available?",
+    sublabel: "Select all types you have had done",
+  },
+  {
+    id: "walkingAid", section: "Joint Information", type: "radio",
+    label: "Do you use a walking aid?",
+    opts: ["None", "Cane", "Walker", "Wheelchair"],
+    field: "walkingAid",
+  },
+  {
+    id: "painWakesSleep", section: "Joint Information", type: "radio",
+    label: "Does your pain wake you from sleep?",
+    opts: ["Yes", "No", "Sometimes"],
+    field: "painWakesSleep",
+  },
+
+  // ── Pain Management ───────────────────────────────────────────────────────
+  {
+    id: "triedPhysiotherapy", section: "Pain Management", type: "radio",
+    label: "Have you tried physiotherapy for this condition?",
+    opts: ["Yes", "No"],
+    field: "triedPhysiotherapy",
+  },
+  {
+    id: "triedBracing", section: "Pain Management", type: "radio",
+    label: "Have you tried bracing or orthotics?",
+    opts: ["Yes", "No"],
+    field: "triedBracing",
+  },
+  {
+    id: "triedAntiInflammatories", section: "Pain Management", type: "radio",
+    label: "Have you taken anti-inflammatory medications?",
+    sublabel: "e.g. ibuprofen, naproxen, diclofenac",
+    opts: ["Yes", "No"],
+    field: "triedAntiInflammatories",
+  },
+  {
+    id: "triedInjections", section: "Pain Management", type: "radio",
+    label: "Have you received cortisone or other injections?",
+    opts: ["Yes", "No"],
+    field: "triedInjections",
+  },
+  {
+    id: "triedWeightLoss", section: "Pain Management", type: "radio",
+    label: "Have you tried a weight loss program?",
+    opts: ["Yes", "No"],
+    field: "triedWeightLoss",
+  },
+  {
+    id: "triedExercise", section: "Pain Management", type: "radio",
+    label: "Have you followed a structured exercise program?",
+    opts: ["Yes", "No"],
+    field: "triedExercise",
+  },
+
+  // ── Medical History ───────────────────────────────────────────────────────
+  {
+    id: "conditions-select", section: "Medical History", type: "conditions-select",
+    label: "Do you have any of the following medical conditions?",
+    sublabel: "Select all that apply",
+  },
+  {
+    id: "diabetes", section: "Medical History", type: "radio",
+    label: "Is your diabetes managed with insulin?",
+    opts: ["Yes, insulin", "No, diet / pills only"],
+    field: "diabetes",
+    showIf: (d) => d.medicalConditions.includes("Diabetes"),
+  },
+  {
+    id: "sleepApnea", section: "Medical History", type: "radio",
+    label: "Do you use a CPAP machine for your sleep apnea?",
+    opts: ["Yes", "No"],
+    field: "sleepApnea",
+    showIf: (d) => d.medicalConditions.includes("Sleep apnea"),
+  },
+
+  // ── Allergies ────────────────────────────────────────────────────────────
+  {
+    id: "hasAllergies", section: "Allergies & Safety", type: "radio",
+    label: "Do you have any known allergies?",
+    sublabel: "Medications, environmental, food",
+    opts: ["Yes", "No"],
+    field: "hasAllergies",
+  },
+  {
+    id: "allergiesText", section: "Allergies & Safety", type: "textarea",
+    label: "Please describe your allergies and reactions",
+    field: "allergiesText",
+    showIf: (d) => d.hasAllergies === "Yes",
+  },
+  {
+    id: "metalAllergy", section: "Allergies & Safety", type: "radio",
+    label: "Do you have an allergy to metal (e.g. nickel)?",
+    sublabel: "Important for implant selection",
+    opts: ["Yes", "No", "Unsure"],
+    field: "metalAllergy",
+  },
+  {
+    id: "latexAllergy", section: "Allergies & Safety", type: "radio",
+    label: "Do you have a latex allergy?",
+    opts: ["Yes", "No", "Unsure"],
+    field: "latexAllergy",
+  },
+
+  // ── Surgical History ─────────────────────────────────────────────────────
+  {
+    id: "hasSurgeries", section: "Surgical History", type: "radio",
+    label: "Have you had any previous surgeries?",
+    opts: ["Yes", "No"],
+    field: "hasSurgeries",
+  },
+  {
+    id: "surgeriesText", section: "Surgical History", type: "textarea",
+    label: "Please describe your previous surgeries",
+    sublabel: "Include what, when, and where",
+    field: "surgeriesText",
+    showIf: (d) => d.hasSurgeries === "Yes",
+  },
+
+  // ── Anesthetic history ───────────────────────────────────────────────────
+  {
+    id: "anestheticTypes", section: "Anesthetic History", type: "radio",
+    label: "Have you ever had anesthesia before?",
+    opts: ["Yes", "No"],
+    field: "anestheticTypes",
+  },
+  {
+    id: "anestheticComplications", section: "Anesthetic History", type: "radio",
+    label: "Did you experience any complications with anesthesia?",
+    sublabel: "e.g. severe nausea, allergic reaction, awareness",
+    opts: ["Yes", "No"],
+    field: "anestheticComplications",
+    showIf: (d) => d.anestheticTypes === "Yes",
+  },
+  {
+    id: "familyAnestheticProblems", section: "Anesthetic History", type: "radio",
+    label: "Has anyone in your family had problems with anesthesia?",
+    opts: ["Yes", "No"],
+    field: "familyAnestheticProblems",
+  },
+
+  // ── Social History ────────────────────────────────────────────────────────
+  {
+    id: "tobaccoUse", section: "Social History", type: "radio",
+    label: "What is your tobacco / smoking status?",
+    opts: ["Never", "Former user", "Current user"],
+    field: "tobaccoUse",
+  },
+  {
+    id: "alcoholUse", section: "Social History", type: "radio",
+    label: "Do you regularly consume alcohol?",
+    opts: ["Yes", "No"],
+    field: "alcoholUse",
+  },
+  {
+    id: "alcoholDrinksPerWeek", section: "Social History", type: "radio",
+    label: "Approximately how many drinks per week?",
+    opts: ["1–3", "4–7", "8–14", "15+"],
+    field: "alcoholDrinksPerWeek",
+    showIf: (d) => d.alcoholUse === "Yes",
+  },
+  {
+    id: "drugUse", section: "Social History", type: "radio",
+    label: "Do you use recreational drugs or cannabis?",
+    opts: ["Yes", "No", "Prefer not to say"],
+    field: "drugUse",
+  },
+  {
+    id: "employmentStatus", section: "Social History", type: "radio",
+    label: "What is your current employment status?",
+    opts: ["Full-time", "Part-time", "Not working", "Retired", "Prefer not to say"],
+    field: "employmentStatus",
+  },
+  {
+    id: "livingLocation", section: "Social History", type: "radio",
+    label: "Where do you currently live?",
+    opts: ["City", "Town", "Rural / Remote"],
+    field: "livingLocation",
+  },
+
+  // ── Support & Fall Risk ──────────────────────────────────────────────────
+  {
+    id: "liveAlone", section: "Support & Recovery", type: "radio",
+    label: "Do you currently live alone?",
+    opts: ["Yes", "No"],
+    field: "liveAlone",
+  },
+  {
+    id: "caregiverAfterSurgery", section: "Support & Recovery", type: "radio",
+    label: "Will you have someone to care for you after surgery?",
+    opts: ["Yes, I have one", "No, I need help"],
+    field: "caregiverAfterSurgery",
+  },
+  {
+    id: "transportationReliable", section: "Support & Recovery", type: "radio",
+    label: "Do you have reliable transportation to appointments?",
+    opts: ["Always", "Sometimes", "No"],
+    field: "transportationReliable",
+  },
+  {
+    id: "fallHistory", section: "Support & Recovery", type: "radio",
+    label: "Have you fallen in the past 12 months?",
+    opts: ["Yes", "No"],
+    field: "fallHistory",
+  },
+  {
+    id: "dizzyOnStanding", section: "Support & Recovery", type: "radio",
+    label: "Do you feel dizzy or lightheaded when you stand up?",
+    opts: ["Yes", "No", "Sometimes"],
+    field: "dizzyOnStanding",
+  },
+  {
+    id: "surgeryBarrier", section: "Support & Recovery", type: "radio",
+    label: "Are there any barriers that may prevent you from having surgery?",
+    sublabel: "Financial, transportation, housing, childcare, etc.",
+    opts: ["Yes", "No"],
+    field: "surgeryBarrier",
+  },
+
+  // ── Health Screenings ─────────────────────────────────────────────────────
+  {
+    id: "visionProblems", section: "Health Screenings", type: "radio",
+    label: "Do you have problems with your vision?",
+    opts: ["Yes", "No"],
+    field: "visionProblems",
+  },
+  {
+    id: "hearingProblems", section: "Health Screenings", type: "radio",
+    label: "Do you have problems with your hearing?",
+    opts: ["Yes", "No"],
+    field: "hearingProblems",
+  },
+  {
+    id: "dentalIssues", section: "Health Screenings", type: "radio",
+    label: "Do you have any dental concerns or loose teeth?",
+    sublabel: "Relevant for anesthesia (breathing tubes)",
+    opts: ["Yes", "No"],
+    field: "dentalIssues",
+  },
+  {
+    id: "fluVaccine", section: "Health Screenings", type: "radio",
+    label: "Did you receive a flu vaccine this season?",
+    opts: ["Yes", "No"],
+    field: "fluVaccine",
+  },
+  {
+    id: "covidVaccine", section: "Health Screenings", type: "radio",
+    label: "Are you up to date with your COVID-19 vaccinations?",
+    opts: ["Yes", "No"],
+    field: "covidVaccine",
+  },
+
+  // ── Medications ──────────────────────────────────────────────────────────
+  {
+    id: "currentMedications", section: "Medications", type: "medications-text",
+    label: "Please list all current medications",
+    sublabel: "Include name, dose, and when you take them",
+    field: "currentMedications",
+  },
+
+  // ── Consent ──────────────────────────────────────────────────────────────
+  {
+    id: "consent-group", section: "Consent & Privacy", type: "consent-group",
+    label: "Review and consent",
+    sublabel: "Please review the following consent statements",
   },
 ];
 
-function Step11({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  const toggleSymptom = (key: string) => {
-    u({ symptoms: { ...d.symptoms, [key]: !d.symptoms[key] } });
-  };
+// ─── OptionCard ──────────────────────────────────────────────────────────────
+
+function OptionCard({
+  option, selected, onClick, readOnly,
+}: {
+  option: string; selected: boolean; onClick: () => void; readOnly: boolean;
+}) {
+  const Icon = OPTION_ICON[option] || Check;
+  const colorCls = selected
+    ? "border-[#1f64ad] bg-[#1f64ad]/5 text-[#1f64ad] shadow-md ring-2 ring-[#1f64ad]/20"
+    : (OPTION_COLOR[option] ?? "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50");
 
   return (
-    <div className="space-y-6">
-      <p className="text-[15px] text-muted-foreground">Check any symptoms you have currently or have had in the past.</p>
-
-      {SYMPTOM_GROUPS.map(group => (
-        <div key={group.title} className="space-y-3">
-          <h4 className="text-base font-semibold font-display tracking-tight text-foreground">{group.title}</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {group.items.map(item => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => toggleSymptom(item)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-lg border transition-all text-left",
-                  "text-[14px]",
-                  d.symptoms[item]
-                    ? "border-primary/40 bg-primary/5 text-primary font-medium"
-                    : "border-border bg-white text-foreground hover:border-primary/20 hover:bg-muted/30"
-                )}
-              >
-                <div className={cn(
-                  "w-4.5 h-4.5 rounded-md border-2 shrink-0 flex items-center justify-center transition-colors",
-                  "w-[18px] h-[18px]",
-                  d.symptoms[item] ? "border-primary bg-primary" : "border-muted-foreground/30"
-                )}>
-                  {d.symptoms[item] && <Check className="w-3 h-3 text-white" />}
-                </div>
-                {item}
-              </button>
-            ))}
-          </div>
-
-          {/* Conditional follow-ups within this group */}
-          {group.title === "Respiratory (Lungs)" && d.symptoms["Chronic obstructive"] && (
-            <div className="ml-4">
-              <FormField label="Do you use O2 at home?">
-                <YesNoToggle value={d.symptomsO2AtHome} onChange={v => u({ symptomsO2AtHome: v })} />
-              </FormField>
-            </div>
-          )}
-
-          {group.title === "Liver / Endocrine" && d.symptoms["Diabetes"] && (
-            <div className="ml-4 space-y-3">
-              <FormField label="Diabetes type">
-                <div className="flex gap-3">
-                  <BigRadioOption value="type1" label="Type 1" selected={d.diabetesType === "type1"} onSelect={v => u({ diabetesType: v })} />
-                  <BigRadioOption value="type2" label="Type 2" selected={d.diabetesType === "type2"} onSelect={v => u({ diabetesType: v })} />
-                </div>
-              </FormField>
-              <FormField label="Do you take insulin?">
-                <YesNoToggle value={d.diabetesInsulin} onChange={v => u({ diabetesInsulin: v })} />
-              </FormField>
-            </div>
-          )}
-
-          {group.title === "Cancer" && d.symptoms["Cancer (self)"] && (
-            <div className="ml-4 space-y-3">
-              <FormField label="Date(s)">
-                <BigInput value={d.cancerSelfDates} onChange={e => u({ cancerSelfDates: e.target.value })} placeholder="When?" />
-              </FormField>
-              <FormField label="Treatment">
-                <BigInput value={d.cancerTreatment} onChange={e => u({ cancerTreatment: e.target.value })} placeholder="What treatment?" />
-              </FormField>
-            </div>
-          )}
-
-          {group.title === "Musculoskeletal" && d.symptoms["Cortisone injection"] && (
-            <div className="ml-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <FormField label="When?">
-                <BigInput value={d.cortisoneWhen} onChange={e => u({ cortisoneWhen: e.target.value })} placeholder="Approximate date" />
-              </FormField>
-              <FormField label="Where?">
-                <BigInput value={d.cortisoneWhere} onChange={e => u({ cortisoneWhere: e.target.value })} placeholder="Which joint/area?" />
-              </FormField>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
+    <button
+      type="button"
+      onClick={() => !readOnly && onClick()}
+      disabled={readOnly}
+      className={cn(
+        "relative flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 min-h-[90px] transition-all w-full",
+        colorCls
+      )}
+    >
+      {selected && (
+        <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#1f64ad] flex items-center justify-center">
+          <Check size={11} className="text-white" />
+        </span>
+      )}
+      <Icon size={22} />
+      <span className="text-[12px] font-bold leading-tight text-center">{option}</span>
+    </button>
   );
 }
 
-function Step12({ d, u }: { d: FormData; u: (p: Partial<FormData>) => void }) {
-  const updateMed = (i: number, field: keyof MedicationEntry, val: string) => {
-    const next = [...d.medications];
-    next[i] = { ...next[i], [field]: val };
-    u({ medications: next });
-  };
-  const addMed = () => u({ medications: [...d.medications, { name: "", dose: "", timeOfDay: "" }] });
-  const removeMed = (i: number) => {
-    if (d.medications.length <= 1) return;
-    u({ medications: d.medications.filter((_, idx) => idx !== i) });
-  };
+// ─── CheckboxCard (multi-select) ─────────────────────────────────────────────
 
+function CheckboxCard({
+  option, selected, onClick,
+}: {
+  option: string; selected: boolean; onClick: () => void;
+}) {
+  const Icon = OPTION_ICON[option] || Check;
   return (
-    <div className="space-y-8">
-      {/* Other Questions */}
-      <div className="space-y-4">
-        <SectionHeading>Other Questions</SectionHeading>
-
-        <div className="space-y-4">
-          {[
-            { label: "Have you ever become confused or had memory problems after an anesthetic?", key: "confusionAfterAnesthetic" as const },
-            { label: "Do you experience heart or breathing problems after walking 4 blocks on level ground?", key: "heartBreathingWalking" as const },
-            { label: "Do you experience heart or breathing problems after climbing 2 flights of stairs?", key: "heartBreathingStairs" as const },
-            { label: "Have you been treated for an antibiotic resistant infection?", key: "antibioticResistant" as const },
-            { label: "Have you had recent contact with any communicable disease?", key: "communicableDisease" as const },
-          ].map(q => (
-            <div key={q.key} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 border-b border-border/50">
-              <span className="text-[15px] text-foreground flex-1">{q.label}</span>
-              <YesNoToggle value={d[q.key]} onChange={v => u({ [q.key]: v })} />
-            </div>
-          ))}
-        </div>
-
-        {/* Weight loss */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 border-b border-border/50">
-          <span className="text-[15px] text-foreground flex-1">Have you experienced recent weight loss without trying?</span>
-          <YesNoToggle value={d.recentWeightLoss} onChange={v => u({ recentWeightLoss: v })} />
-        </div>
-        {d.recentWeightLoss === "yes" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-4">
-            <FormField label="How much (lbs)?">
-              <BigInput value={d.weightLossAmount} onChange={e => u({ weightLossAmount: e.target.value })} placeholder="e.g. 10" />
-            </FormField>
-            <FormField label="Decreased appetite?">
-              <YesNoToggle value={d.decreasedAppetite} onChange={v => u({ decreasedAppetite: v })} />
-            </FormField>
-          </div>
-        )}
-
-        {/* Vision */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 border-b border-border/50">
-          <span className="text-[15px] text-foreground flex-1">Do you have vision problems?</span>
-          <YesNoToggle value={d.visionProblems} onChange={v => u({ visionProblems: v })} />
-        </div>
-        {d.visionProblems === "yes" && (
-          <FormField label="Vision aids used">
-            <BigInput value={d.visionAids} onChange={e => u({ visionAids: e.target.value })} placeholder="e.g. Glasses, contacts" className="ml-4" />
-          </FormField>
-        )}
-
-        {/* Hearing */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 border-b border-border/50">
-          <span className="text-[15px] text-foreground flex-1">Do you have hearing problems?</span>
-          <YesNoToggle value={d.hearingProblems} onChange={v => u({ hearingProblems: v })} />
-        </div>
-        {d.hearingProblems === "yes" && (
-          <FormField label="Hearing aids used">
-            <BigInput value={d.hearingAids} onChange={e => u({ hearingAids: e.target.value })} placeholder="e.g. Hearing aid (left ear)" className="ml-4" />
-          </FormField>
-        )}
-
-        {/* Dental */}
-        <div className="py-3 border-b border-border/50 space-y-3">
-          <span className="text-[15px] text-foreground font-medium">Dental History</span>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <BigCheckbox id="dentures" checked={d.dentalFullDentures} onCheckedChange={v => u({ dentalFullDentures: v })} label="Full Dentures" />
-            <BigCheckbox id="caps" checked={d.dentalCaps} onCheckedChange={v => u({ dentalCaps: v })} label="Caps/Crowns" />
-            <BigCheckbox id="bridge" checked={d.dentalBridgework} onCheckedChange={v => u({ dentalBridgework: v })} label="Bridgework" />
-          </div>
-          {!d.dentalFullDentures && (
-            <FormField label="Date of last dental exam">
-              <BigInput value={d.dentalLastExam} onChange={e => u({ dentalLastExam: e.target.value })} placeholder="e.g. March 2025" />
-            </FormField>
-          )}
-        </div>
-
-        {/* Motion sickness */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 border-b border-border/50">
-          <span className="text-[15px] text-foreground flex-1">Have you ever experienced motion sickness?</span>
-          <YesNoToggle value={d.motionSickness} onChange={v => u({ motionSickness: v })} />
-        </div>
-
-        {/* Vaccines */}
-        {[
-          { label: "Did you get your flu vaccine this year?", key: "fluVaccine" as const, whenKey: "fluVaccineWhen" as const },
-          { label: "Have you ever had a pneumonia vaccine?", key: "pneumoniaVaccine" as const, whenKey: "pneumoniaVaccineWhen" as const },
-          { label: "Did you get your COVID-19 vaccine this year?", key: "covidVaccine" as const, whenKey: "covidVaccineWhen" as const },
-        ].map(v => (
-          <div key={v.key}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 border-b border-border/50">
-              <span className="text-[15px] text-foreground flex-1">{v.label}</span>
-              <YesNoToggle value={d[v.key]} onChange={val => u({ [v.key]: val })} />
-            </div>
-            {d[v.key] === "yes" && (
-              <FormField label="When?">
-                <BigInput value={d[v.whenKey]} onChange={e => u({ [v.whenKey]: e.target.value })} placeholder="Approximate date" className="ml-4 mt-2" />
-              </FormField>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <Separator />
-
-      {/* Medications */}
-      <div className="space-y-4">
-        <SectionHeading>Medications</SectionHeading>
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-          <p className="text-sm text-blue-800">
-            Please list all medications, vitamins, and supplements you take. Also bring them to your appointment in their original containers.
-          </p>
-        </div>
-
-        {d.medications.map((m, i) => (
-          <div key={i} className="bg-muted/30 rounded-xl border border-border/50 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Medication {i + 1}</span>
-              {d.medications.length > 1 && (
-                <button type="button" onClick={() => removeMed(i)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-red-50">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <BigInput value={m.name} onChange={e => updateMed(i, "name", e.target.value)} placeholder="Medication name" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <BigInput value={m.dose} onChange={e => updateMed(i, "dose", e.target.value)} placeholder="Dose (e.g. 500mg)" />
-              <BigInput value={m.timeOfDay} onChange={e => updateMed(i, "timeOfDay", e.target.value)} placeholder="Time of day (e.g. Morning)" />
-            </div>
-          </div>
-        ))}
-        <Button type="button" variant="outline" onClick={addMed} className="h-11 text-[15px]">
-          <Plus className="w-4 h-4 mr-2" /> Add Another Medication
-        </Button>
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 min-h-[90px] transition-all w-full",
+        selected
+          ? "border-[#1f64ad] bg-[#1f64ad]/5 text-[#1f64ad] shadow-md ring-2 ring-[#1f64ad]/20"
+          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+      )}
+    >
+      {selected && (
+        <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#1f64ad] flex items-center justify-center">
+          <Check size={11} className="text-white" />
+        </span>
+      )}
+      <Icon size={22} />
+      <span className="text-[12px] font-bold leading-tight text-center">{option}</span>
+    </button>
   );
 }
 
-// ─── Main Page ──────────────────────────────────────────────
-
-// ─── Layout-free content (used inside FormsHub) ────────────
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export function HealthHistoryFormContent() {
-  const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>(getInitialFormData);
+  const [formData, setFormData] = useState<FormData>(getInitialData());
+  const [currentStep, setCurrentStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
 
-  const update = useCallback((partial: Partial<FormData>) => {
-    setFormData(prev => ({ ...prev, ...partial }));
-  }, []);
+  const set = (field: keyof FormData, value: any) =>
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
-  const totalSteps = STEPS.length;
-  const progress = ((step + 1) / totalSteps) * 100;
+  const questions = useMemo(
+    () => ALL_QUESTIONS.filter((q) => !q.showIf || q.showIf(formData)),
+    [formData]
+  );
 
-  const goNext = () => { if (step < totalSteps - 1) setStep(s => s + 1); window.scrollTo(0, 0); };
-  const goPrev = () => { if (step > 0) setStep(s => s - 1); window.scrollTo(0, 0); };
+  const total = questions.length;
+  const q = questions[currentStep];
+  const progress = ((currentStep + 1) / total) * 100;
 
-  const handleSubmit = () => {
-    setSubmitted(true);
+  const canAdvance = () => {
+    if (!q) return false;
+    switch (q.type) {
+      case "patient-info": return formData.legalFirstName.trim() !== "" && formData.legalLastName.trim() !== "" && formData.birthdate !== "";
+      case "emergency-contact": return formData.emergencyContactName.trim() !== "";
+      case "referring": return true;
+      case "joint-select": return formData.jointHip || formData.jointKnee || formData.jointShoulder || formData.jointOther;
+      case "imaging-select": return formData.imagingXray || formData.imagingMRI || formData.imagingCT || formData.imagingUltrasound || formData.imagingNone;
+      case "conditions-select": return formData.medicalConditions !== "";
+      case "medications-text": return true;
+      case "consent-group": return formData.consentData !== "" && formData.consentElectronic !== "" && formData.consentShare !== "";
+      case "radio": return q.field ? (formData[q.field] as string) !== "" : true;
+      case "textarea": return (formData[q.field!] as string).trim() !== "";
+      default: return true;
+    }
   };
+
+  const goNext = () => {
+    if (currentStep < total - 1) setCurrentStep((s) => s + 1);
+    else setSubmitted(true);
+  };
+  const goBack = () => setCurrentStep((s) => Math.max(0, s - 1));
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 animate-enter">
-        <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mb-6">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 p-8">
+        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
           <Check className="w-10 h-10 text-green-600" />
         </div>
-        <h1 className="text-3xl font-bold font-display tracking-tight text-foreground mb-3">
-          Form Submitted
-        </h1>
-        <p className="text-lg text-muted-foreground text-center max-w-md mb-8">
-          Your health history form has been submitted successfully. Your surgical team will review it before your appointment.
-        </p>
-        <Button onClick={() => { setSubmitted(false); setStep(0); setFormData(getInitialFormData()); }} variant="outline" className="h-12 px-6 text-[15px]">
-          Fill Out Another Form
-        </Button>
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold font-display text-slate-900">History Submitted</h2>
+          <p className="text-slate-500 text-sm">Thank you. Your health history has been recorded.</p>
+        </div>
+        <button
+          onClick={() => { setFormData(getInitialData()); setCurrentStep(0); setSubmitted(false); }}
+          className="px-6 py-2.5 rounded-lg bg-[#1f64ad] text-white text-sm font-semibold"
+        >
+          Start Over
+        </button>
       </div>
     );
   }
 
-  return (
-    <div className="animate-enter">
-      {/* Progress bar */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-foreground">
-            Step {step + 1} of {totalSteps}
-          </span>
-          <span className="text-sm font-medium text-primary">
-            {STEPS[step]}
-          </span>
+  // ── Section label ──────────────────────────────────────────────────────────
+  const sections = Array.from(new Set(ALL_QUESTIONS.map((q) => q.section)));
+  const sectionIdx = sections.indexOf(q?.section ?? "");
+  const sectionNum = sectionIdx + 1;
+
+  // ── Render question body ───────────────────────────────────────────────────
+  const renderBody = () => {
+    if (!q) return null;
+
+    // Patient info group
+    if (q.type === "patient-info") {
+      return (
+        <div className="space-y-4 w-full max-w-lg">
+          <div className="grid grid-cols-2 gap-3">
+            {(["legalFirstName", "legalLastName"] as const).map((f, i) => (
+              <div key={f} className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                  {i === 0 ? "Legal First Name *" : "Legal Last Name *"}
+                </label>
+                <input
+                  type="text"
+                  value={formData[f]}
+                  onChange={(e) => set(f, e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-[#1f64ad]/20 focus:border-[#1f64ad]"
+                />
+              </div>
+            ))}
+          </div>
+          {([
+            ["preferredName", "Preferred Name"],
+            ["healthCareNumber", "Health Care Number *"],
+            ["birthdate", "Date of Birth *"],
+            ["primaryPhone", "Primary Phone"],
+            ["email", "Email Address"],
+            ["addressStreet", "Street Address"],
+          ] as [keyof FormData, string][]).map(([f, label]) => (
+            <div key={f} className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">{label}</label>
+              <input
+                type={f === "birthdate" ? "date" : f === "email" ? "email" : "text"}
+                value={formData[f] as string}
+                onChange={(e) => set(f, e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-[#1f64ad]/20 focus:border-[#1f64ad]"
+              />
+            </div>
+          ))}
+          <div className="grid grid-cols-3 gap-3">
+            {(["addressCity", "addressProvince", "addressPostalCode"] as const).map((f, i) => (
+              <div key={f} className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                  {["City", "Province", "Postal Code"][i]}
+                </label>
+                <input
+                  type="text"
+                  value={formData[f]}
+                  onChange={(e) => set(f, e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-[#1f64ad]/20 focus:border-[#1f64ad]"
+                />
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${progress}%` }}
+      );
+    }
+
+    // Emergency contact group
+    if (q.type === "emergency-contact") {
+      return (
+        <div className="space-y-4 w-full max-w-lg">
+          {([
+            ["emergencyContactName", "Contact Name *"],
+            ["emergencyContactRelationship", "Relationship to You"],
+            ["emergencyContactPhone", "Phone Number"],
+          ] as [keyof FormData, string][]).map(([f, label]) => (
+            <div key={f} className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">{label}</label>
+              <input
+                type="text"
+                value={formData[f] as string}
+                onChange={(e) => set(f, e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-[#1f64ad]/20 focus:border-[#1f64ad]"
+              />
+            </div>
+          ))}
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+              Is this person your Substitute Decision Maker?
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {["Yes", "No"].map((opt) => (
+                <OptionCard
+                  key={opt} option={opt}
+                  selected={formData.emergencyContactIsSDM === opt}
+                  onClick={() => set("emergencyContactIsSDM", opt)}
+                  readOnly={false}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+              Do you have an advance directive / personal directive?
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {["Yes", "No", "In progress"].map((opt) => (
+                <OptionCard
+                  key={opt} option={opt}
+                  selected={formData.directiveStatus === opt}
+                  onClick={() => set("directiveStatus", opt)}
+                  readOnly={false}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Referring physician group
+    if (q.type === "referring") {
+      return (
+        <div className="space-y-4 w-full max-w-lg">
+          {([
+            ["referringPhysicianName", "Referring Physician Name"],
+            ["referringClinic", "Clinic"],
+            ["referringPhysicianPhone", "Phone"],
+            ["referralDate", "Referral Date"],
+          ] as [keyof FormData, string][]).map(([f, label]) => (
+            <div key={f} className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">{label}</label>
+              <input
+                type={f === "referralDate" ? "date" : "text"}
+                value={formData[f] as string}
+                onChange={(e) => set(f, e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-[#1f64ad]/20 focus:border-[#1f64ad]"
+              />
+            </div>
+          ))}
+          {formData.hasFamilyPhysician === "Yes" && (
+            <div className="grid grid-cols-2 gap-3">
+              {(["familyPhysicianName", "familyPhysicianClinic"] as const).map((f, i) => (
+                <div key={f} className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                    {["Family Physician Name", "Family Physician Clinic"][i]}
+                  </label>
+                  <input
+                    type="text" value={formData[f]}
+                    onChange={(e) => set(f, e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-[#1f64ad]/20 focus:border-[#1f64ad]"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Joint selection (multi-select)
+    if (q.type === "joint-select") {
+      const joints = ["Hip", "Knee", "Shoulder", "Other"];
+      const jointFields: (keyof FormData)[] = ["jointHip", "jointKnee", "jointShoulder", "jointOther"];
+      return (
+        <div className="space-y-4 w-full max-w-lg">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {joints.map((joint, i) => (
+              <CheckboxCard
+                key={joint} option={joint}
+                selected={formData[jointFields[i]] as boolean}
+                onClick={() => set(jointFields[i], !formData[jointFields[i]])}
+              />
+            ))}
+          </div>
+          {formData.jointOther && (
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Please specify</label>
+              <input
+                type="text" value={formData.jointOtherText}
+                onChange={(e) => set("jointOtherText", e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-[#1f64ad]/20 focus:border-[#1f64ad]"
+              />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Imaging selection (multi-select)
+    if (q.type === "imaging-select") {
+      const imagingOpts = [
+        { label: "X-ray", field: "imagingXray" as keyof FormData },
+        { label: "MRI", field: "imagingMRI" as keyof FormData },
+        { label: "CT Scan", field: "imagingCT" as keyof FormData },
+        { label: "Ultrasound", field: "imagingUltrasound" as keyof FormData },
+        { label: "None available", field: "imagingNone" as keyof FormData },
+      ];
+      return (
+        <div className="space-y-4 w-full max-w-lg">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {imagingOpts.map(({ label, field }) => (
+              <CheckboxCard
+                key={label} option={label}
+                selected={formData[field] as boolean}
+                onClick={() => {
+                  if (label === "None available") {
+                    set("imagingNone", !formData.imagingNone);
+                    if (!formData.imagingNone) {
+                      set("imagingXray", false);
+                      set("imagingMRI", false);
+                      set("imagingCT", false);
+                      set("imagingUltrasound", false);
+                    }
+                  } else {
+                    set(field, !formData[field]);
+                    set("imagingNone", false);
+                  }
+                }}
+              />
+            ))}
+          </div>
+          {(formData.imagingXray || formData.imagingMRI || formData.imagingCT || formData.imagingUltrasound) && (
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Where and when was imaging done?</label>
+              <input
+                type="text" value={formData.imagingWhereWhen}
+                onChange={(e) => set("imagingWhereWhen", e.target.value)}
+                placeholder="e.g. City Radiology Centre, Jan 2024"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-[#1f64ad]/20 focus:border-[#1f64ad]"
+              />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Medical conditions (multi-select)
+    if (q.type === "conditions-select") {
+      const conditions = [
+        "Diabetes", "High blood pressure", "Heart disease", "Lung disease",
+        "Kidney disease", "Sleep apnea", "Stroke", "Cancer",
+        "Mental health condition", "Rheumatoid arthritis", "Osteoporosis",
+        "None of these",
+      ];
+      const selected = formData.medicalConditions
+        ? formData.medicalConditions.split(",").map((s) => s.trim()).filter(Boolean)
+        : [];
+      const toggle = (c: string) => {
+        if (c === "None of these") {
+          set("medicalConditions", selected.includes("None of these") ? "" : "None of these");
+        } else {
+          const next = selected.includes(c)
+            ? selected.filter((x) => x !== c)
+            : [...selected.filter((x) => x !== "None of these"), c];
+          set("medicalConditions", next.join(", "));
+        }
+      };
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-lg">
+          {conditions.map((c) => (
+            <CheckboxCard key={c} option={c} selected={selected.includes(c)} onClick={() => toggle(c)} />
+          ))}
+        </div>
+      );
+    }
+
+    // Medications text (special large textarea)
+    if (q.type === "medications-text") {
+      return (
+        <div className="space-y-3 w-full max-w-lg">
+          <textarea
+            value={formData.currentMedications}
+            onChange={(e) => set("currentMedications", e.target.value)}
+            rows={8}
+            placeholder={"e.g.\nMetformin 500mg — twice daily\nRamipril 5mg — morning\nAtorvastatin 20mg — evening"}
+            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-[13px] outline-none focus:ring-2 focus:ring-[#1f64ad]/20 focus:border-[#1f64ad] resize-none font-mono"
           />
+          <p className="text-[11px] text-slate-400">Include vitamins, supplements, and over-the-counter medications</p>
         </div>
-        <div className="flex justify-between mt-3 px-1">
-          {STEPS.map((s, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => { setStep(i); window.scrollTo(0, 0); }}
-              className={cn(
-                "w-2.5 h-2.5 rounded-full transition-all",
-                i === step
-                  ? "bg-primary scale-125"
-                  : i < step
-                  ? "bg-primary/40"
-                  : "bg-muted-foreground/20"
-              )}
-              title={s}
+      );
+    }
+
+    // Consent group
+    if (q.type === "consent-group") {
+      const consents: { field: keyof FormData; text: string }[] = [
+        { field: "consentData", text: "I consent to collection and use of my health information for the purpose of my care." },
+        { field: "consentElectronic", text: "I consent to electronic communication of my health information with my care team." },
+        { field: "consentShare", text: "I consent to my information being shared with relevant specialists involved in my care." },
+      ];
+      return (
+        <div className="space-y-5 w-full max-w-lg">
+          {consents.map(({ field, text }) => (
+            <div key={field} className="space-y-2">
+              <p className="text-[13px] text-slate-700 leading-relaxed">{text}</p>
+              <div className="grid grid-cols-2 gap-3">
+                {["I agree", "I do not agree"].map((opt) => (
+                  <OptionCard
+                    key={opt} option={opt}
+                    selected={formData[field] === opt}
+                    onClick={() => set(field, opt)}
+                    readOnly={false}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className="space-y-1.5 pt-2">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Patient or Representative Signature</label>
+            <input
+              type="text" value={formData.signature}
+              onChange={(e) => set("signature", e.target.value)}
+              placeholder="Type full name as signature"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-[#1f64ad]/20 focus:border-[#1f64ad]"
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // Radio
+    if (q.type === "radio" && q.opts) {
+      const cols = q.opts.length <= 2 ? "grid-cols-2" : q.opts.length <= 3 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4";
+      return (
+        <div className={cn("grid gap-3 w-full max-w-lg", cols)}>
+          {q.opts.map((opt) => (
+            <OptionCard
+              key={opt} option={opt}
+              selected={q.field ? formData[q.field] === opt : false}
+              onClick={() => q.field && set(q.field, opt)}
+              readOnly={false}
             />
           ))}
         </div>
+      );
+    }
+
+    // Textarea
+    if (q.type === "textarea" && q.field) {
+      return (
+        <textarea
+          value={formData[q.field] as string}
+          onChange={(e) => q.field && set(q.field, e.target.value)}
+          rows={5}
+          placeholder={q.sublabel || "Type your answer here..."}
+          className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-[13px] outline-none focus:ring-2 focus:ring-[#1f64ad]/20 focus:border-[#1f64ad] resize-none"
+        />
+      );
+    }
+
+    return null;
+  };
+
+  // ── Mini dot navigator ────────────────────────────────────────────────────
+  const dotsToShow = Math.min(total, 15);
+  const dotStart = Math.max(0, Math.min(currentStep - Math.floor(dotsToShow / 2), total - dotsToShow));
+
+  return (
+    <div className="flex flex-col min-h-[calc(100vh-200px)]">
+      {/* Progress bar */}
+      <div className="h-1 bg-slate-100 rounded-full overflow-hidden mb-6">
+        <div
+          className="h-full bg-[#1f64ad] rounded-full transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
-      <Card className="shadow-sm border-border">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-display">{STEPS[step]}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {step === 0 && <Step1 d={formData} u={update} />}
-          {step === 1 && <Step2 d={formData} u={update} />}
-          {step === 2 && <Step3 d={formData} u={update} />}
-          {step === 3 && <Step4 d={formData} u={update} />}
-          {step === 4 && <Step5 d={formData} u={update} />}
-          {step === 5 && <Step6 d={formData} u={update} />}
-          {step === 6 && <Step7 d={formData} u={update} />}
-          {step === 7 && <Step8 d={formData} u={update} />}
-          {step === 8 && <Step9 d={formData} u={update} />}
-          {step === 9 && <Step10 d={formData} u={update} />}
-          {step === 10 && <Step11 d={formData} u={update} />}
-          {step === 11 && <Step12 d={formData} u={update} />}
-        </CardContent>
-      </Card>
+      {/* Section + counter */}
+      <div className="flex items-center justify-between mb-8 px-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-[#1f64ad]/80 bg-[#1f64ad]/8 px-2 py-0.5 rounded-full">
+            {sectionNum}/{sections.length} · {q?.section}
+          </span>
+        </div>
+        <span className="text-[12px] text-slate-400 font-medium">
+          {currentStep + 1} / {total}
+        </span>
+      </div>
 
-      <div className="flex items-center justify-between mt-6 pb-8">
-        <Button type="button" variant="outline" onClick={goPrev} disabled={step === 0} className="h-12 px-6 text-[15px] gap-2">
-          <ChevronLeft className="w-4 h-4" /> Previous
-        </Button>
-        {step < totalSteps - 1 ? (
-          <Button type="button" onClick={goNext} className="h-12 px-8 text-[15px] gap-2">
-            Next <ChevronRight className="w-4 h-4" />
-          </Button>
-        ) : (
-          <Button type="button" onClick={handleSubmit} className="h-12 px-8 text-[15px] gap-2 bg-green-600 hover:bg-green-700">
-            <Check className="w-4 h-4" /> Submit Form
-          </Button>
-        )}
+      {/* Question */}
+      <div className="flex-1 flex flex-col items-center justify-start px-4 max-w-2xl mx-auto w-full">
+        <div className="w-full space-y-8">
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold font-display text-slate-900 tracking-tight leading-snug">
+              {q?.label}
+            </h2>
+            {q?.sublabel && (
+              <p className="text-[13px] text-slate-500">{q.sublabel}</p>
+            )}
+          </div>
+          {renderBody()}
+        </div>
+      </div>
+
+      {/* Nav */}
+      <div className="mt-10 flex items-center justify-between px-4 max-w-2xl mx-auto w-full">
+        <button
+          onClick={goBack}
+          disabled={currentStep === 0}
+          className={cn(
+            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all",
+            currentStep === 0
+              ? "opacity-30 cursor-not-allowed text-slate-400"
+              : "text-slate-600 hover:bg-slate-100"
+          )}
+        >
+          <ChevronLeft size={16} />
+          Back
+        </button>
+
+        {/* Dot progress */}
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: dotsToShow }).map((_, i) => {
+            const stepIdx = dotStart + i;
+            return (
+              <button
+                key={stepIdx}
+                onClick={() => setCurrentStep(stepIdx)}
+                className={cn(
+                  "rounded-full transition-all",
+                  stepIdx === currentStep
+                    ? "w-5 h-2 bg-[#1f64ad]"
+                    : stepIdx < currentStep
+                    ? "w-2 h-2 bg-[#1f64ad]/40"
+                    : "w-2 h-2 bg-slate-200"
+                )}
+              />
+            );
+          })}
+        </div>
+
+        <button
+          onClick={goNext}
+          disabled={!canAdvance()}
+          className={cn(
+            "flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all",
+            canAdvance()
+              ? "bg-[#1f64ad] text-white shadow-md hover:bg-[#1a54a0]"
+              : "bg-slate-100 text-slate-300 cursor-not-allowed"
+          )}
+        >
+          {currentStep === total - 1 ? "Submit" : "OK"}
+          <ChevronRight size={16} />
+        </button>
       </div>
     </div>
   );
 }
-
-// ─── Standalone page (kept for direct route access) ─────────
-
-export default function HealthHistoryForm() {
-  return (
-    <ProviderLayout>
-      <div className="animate-enter">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <ClipboardList className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold font-display tracking-tight text-foreground">
-                Health History Form
-              </h1>
-              <p className="text-sm text-muted-foreground">Alberta Hip & Knee Clinic</p>
-            </div>
-          </div>
-        </div>
-        <HealthHistoryFormContent />
-      </div>
-    </ProviderLayout>
-  );
-}
-

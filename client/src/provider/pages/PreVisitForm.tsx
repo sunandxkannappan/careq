@@ -1,170 +1,38 @@
-import { useState, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useState, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  AlertCircle,
+  ChevronLeft, ChevronRight, Check, CheckCircle2, Activity, Minus,
+  TrendingDown, AlertTriangle, X, Video, MapPin, Users, Languages,
+  Footprints, ArrowUp, ShoppingBag, Briefcase, Moon, Zap, Thermometer,
+  Pill, Dumbbell, Shield, Syringe, Scale, Stethoscope, FlaskConical,
+  Smartphone, Tablet, Laptop, Monitor, Volume2, Wifi, Lock,
+  MessageSquare, ClipboardList, HeartPulse, Brain, RefreshCw,
+  TrendingUp, Ban, Calendar, User,
 } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
-// ─── Shared UI helpers (mirrored from TriageAssessmentForm) ──
-
-function BigRadioOption({ value, label, sublabel, selected, onSelect }: {
-  value: string; label: string; sublabel?: string; selected: boolean; onSelect: (v: string) => void;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          onClick={() => onSelect(value)}
-          className={cn(
-            "w-full min-w-0 flex items-center gap-3 px-4 py-3.5 rounded-lg border-2 transition-all text-left min-h-[52px]",
-            "text-[15px] font-medium",
-            selected
-              ? "border-primary bg-primary/5 text-primary"
-              : "border-border bg-white text-foreground hover:border-primary/30 hover:bg-muted/30"
-          )}
-        >
-          <div className={cn(
-            "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors",
-            selected ? "border-primary bg-primary" : "border-muted-foreground/40"
-          )}>
-            {selected && <div className="w-2 h-2 rounded-full bg-white" />}
-          </div>
-          <div className="min-w-0 overflow-hidden">
-            <span className="line-clamp-2">{label}</span>
-            {sublabel && <span className="block text-xs text-muted-foreground font-normal mt-0.5">{sublabel}</span>}
-          </div>
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-xs text-center bg-primary text-white border-primary">{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-
-function BigCheckbox({ checked, onCheckedChange, label }: {
-  checked: boolean; onCheckedChange: (v: boolean) => void; label: string;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          onClick={() => onCheckedChange(!checked)}
-          className={cn(
-            "w-full min-w-0 flex items-center gap-3 px-4 py-3.5 rounded-lg border-2 transition-all text-left min-h-[52px]",
-            "text-[15px] font-medium",
-            checked
-              ? "border-primary bg-primary/5 text-primary"
-              : "border-border bg-white text-foreground hover:border-primary/30 hover:bg-muted/30"
-          )}
-        >
-          <div className={cn(
-            "w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-colors",
-            checked ? "border-primary bg-primary" : "border-muted-foreground/40"
-          )}>
-            {checked && <Check className="w-3 h-3 text-white" />}
-          </div>
-          <span className="min-w-0 overflow-hidden line-clamp-2">{label}</span>
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-xs text-center bg-primary text-white border-primary">{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-
-function FormField({ label, required, children, hint, source }: {
-  label: string; required?: boolean; children: React.ReactNode; hint?: string; source?: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-start justify-between gap-4">
-        <Label className="text-[15px] font-medium text-foreground">
-          {label}
-          {required && <span className="text-destructive ml-1">*</span>}
-        </Label>
-        {source && <span className="text-[11px] text-muted-foreground italic shrink-0">{source}</span>}
-      </div>
-      {hint && <p className="text-sm text-muted-foreground">{hint}</p>}
-      {children}
-    </div>
-  );
-}
-
-function BigInput({ ...props }: React.ComponentProps<typeof Input>) {
-  return <Input {...props} className={cn("h-12 text-[15px] px-4", props.className)} />;
-}
-
-// ─── Types ──────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface PreVisitFormData {
-  // Header
-  patientName: string;
-  dob: string;
-  date: string;
-  jointAssessed: string;
-  referringClinician: string;
-  nhiMrn: string;
-
-  // Section A – Pain & Symptoms
+  patientName: string; dob: string; date: string;
+  jointAssessed: string; referringClinician: string; nhiMrn: string;
   a1: string; a2: string; a3: string; a4: string; a5: string; a6: string;
-
-  // Section B – Functional Impact
   b1: string; b2: string; b3: string; b4: string; b5: string; b6: string;
-
-  // Section C – Quality of Life
   c1: string; c2: string; c3: string; c4: string;
-
-  // Section D – Attempted Management
   d1Treatments: { physio: boolean; bracing: boolean; antiInflammatories: boolean; injections: boolean; weightLoss: boolean; exercise: boolean; acupuncture: boolean; otherTreatment: boolean };
-  d2: string;
-  d3: string;
-  d4: string;
-  d5Medications: string;
-  appointmentDate: string;
-  appointmentType: "virtual" | "in-person" | "";
-  canAttend: "yes" | "no" | "";
-  needsInterpreter: "yes" | "no" | "";
-  interpreterLanguage: string;
-  supportPerson: "yes" | "no" | "";
-  jointToday: "left-hip" | "right-hip" | "left-knee" | "right-knee" | "";
-  symptomChange: "significantly-improved" | "slightly-improved" | "no-change" | "slightly-worse" | "significantly-worse" | "";
-  painRest: string;
-  painActivity: string;
-  symptomIncreasePain: boolean;
-  symptomSwelling: boolean;
-  symptomGivingWay: boolean;
-  symptomFall: boolean;
-  symptomWalkingDifficulty: boolean;
-  symptomNeuro: boolean;
-  symptomFever: boolean;
-  symptomNone: boolean;
-  symptomDescription: string;
-  medsChanged: "yes" | "no" | "";
-  medsChangedDetails: string;
-  painMedicationType: "none" | "otc" | "prescription-non-opioid" | "prescription-opioid" | "";
-  opioidAdequate: "yes" | "partial" | "no" | "";
-  newTreatments: "yes" | "no" | "";
-  newTreatmentsDetails: string;
-  functionalChange: "better" | "same" | "worse" | "";
-  walkingAbility: "no-difficulty" | "with-difficulty" | "housebound" | "";
-  fallsInPastMonth: "yes" | "no" | "";
-  fallsCount: string;
-  mainIssue: string;
-  questionsForTeam: string;
-  otherCareTeamNotes: string;
-  techChecked: "yes" | "no" | "na" | "";
-  deviceType: "smartphone" | "tablet" | "laptop" | "other" | "";
-  deviceTypeOther: string;
-  privateSpace: "yes" | "no" | "";
+  d2: string; d3: string; d4: string; d5Medications: string;
+  appointmentDate: string; appointmentType: string; canAttend: string;
+  needsInterpreter: string; interpreterLanguage: string; supportPerson: string;
+  jointToday: string; symptomChange: string; painRest: string; painActivity: string;
+  symptomIncreasePain: boolean; symptomSwelling: boolean; symptomGivingWay: boolean;
+  symptomFall: boolean; symptomWalkingDifficulty: boolean; symptomNeuro: boolean;
+  symptomFever: boolean; symptomNone: boolean; symptomDescription: string;
+  medsChanged: string; medsChangedDetails: string; painMedicationType: string;
+  opioidAdequate: string; newTreatments: string; newTreatmentsDetails: string;
+  functionalChange: string; walkingAbility: string; fallsInPastMonth: string;
+  fallsCount: string; mainIssue: string; questionsForTeam: string;
+  otherCareTeamNotes: string; techChecked: string; deviceType: string;
+  deviceTypeOther: string; privateSpace: string;
 }
 
 function getInitialData(): PreVisitFormData {
@@ -177,718 +45,690 @@ function getInitialData(): PreVisitFormData {
     d1Treatments: { physio: false, bracing: false, antiInflammatories: false, injections: false, weightLoss: false, exercise: false, acupuncture: false, otherTreatment: false },
     d2: "", d3: "", d4: "", d5Medications: "",
     appointmentDate: new Date().toISOString().split("T")[0],
-    appointmentType: "",
-    canAttend: "",
-    needsInterpreter: "",
-    interpreterLanguage: "",
-    supportPerson: "",
-    jointToday: "",
-    symptomChange: "",
-    painRest: "",
-    painActivity: "",
-    symptomIncreasePain: false,
-    symptomSwelling: false,
-    symptomGivingWay: false,
-    symptomFall: false,
-    symptomWalkingDifficulty: false,
-    symptomNeuro: false,
-    symptomFever: false,
-    symptomNone: false,
-    symptomDescription: "",
-    medsChanged: "",
-    medsChangedDetails: "",
-    painMedicationType: "",
-    opioidAdequate: "",
-    newTreatments: "",
-    newTreatmentsDetails: "",
-    functionalChange: "",
-    walkingAbility: "",
-    fallsInPastMonth: "",
-    fallsCount: "",
-    mainIssue: "",
-    questionsForTeam: "",
-    otherCareTeamNotes: "",
-    techChecked: "",
-    deviceType: "",
-    deviceTypeOther: "",
-    privateSpace: "",
+    appointmentType: "", canAttend: "", needsInterpreter: "", interpreterLanguage: "",
+    supportPerson: "", jointToday: "", symptomChange: "", painRest: "", painActivity: "",
+    symptomIncreasePain: false, symptomSwelling: false, symptomGivingWay: false,
+    symptomFall: false, symptomWalkingDifficulty: false, symptomNeuro: false,
+    symptomFever: false, symptomNone: false, symptomDescription: "",
+    medsChanged: "", medsChangedDetails: "", painMedicationType: "", opioidAdequate: "",
+    newTreatments: "", newTreatmentsDetails: "", functionalChange: "", walkingAbility: "",
+    fallsInPastMonth: "", fallsCount: "", mainIssue: "", questionsForTeam: "",
+    otherCareTeamNotes: "", techChecked: "", deviceType: "", deviceTypeOther: "", privateSpace: "",
   };
 }
 
-// ─── Steps ──────────────────────────────────────────────────
+// ─── Question definitions ─────────────────────────────────────────────────────
 
-const STEPS = [
-  "Patient Information",
-  "A: Pain & Symptoms",
-  "B: Functional Impact",
-  "C: Quality of Life",
-  "D: Attempted Management",
-  "Part 5 — Questions & Agenda for Today's Appointment",
+type Icon = React.ElementType;
+interface Opt { v: string; l: string; icon: Icon; cls?: string }
+interface Q {
+  id: string;
+  section: string;
+  label: string;
+  source?: string;
+  type: "radio" | "checkbox-group" | "scale" | "text" | "date" | "textarea" | "patient-info" | "treatments";
+  opts?: Opt[];
+  field?: keyof PreVisitFormData;
+  showIf?: (d: PreVisitFormData) => boolean;
+}
+
+// Severity 5-option palette (low→high severity)
+const S5 = (labels: string[], icons: Icon[]): Opt[] =>
+  labels.map((l, i) => ({
+    v: String(i), l,
+    icon: icons[i],
+    cls: [
+      "border-green-200 bg-green-50 text-green-800",
+      "border-blue-200 bg-blue-50 text-blue-800",
+      "border-slate-200 bg-slate-50 text-slate-700",
+      "border-amber-200 bg-amber-50 text-amber-800",
+      "border-red-200 bg-red-50 text-red-800",
+    ][i],
+  }));
+
+const painIcons: Icon[] = [CheckCircle2, Activity, Minus, TrendingDown, AlertTriangle];
+const diffIcons: Icon[] = [CheckCircle2, Minus, Activity, TrendingDown, Ban];
+const freqIcons: Icon[] = [CheckCircle2, Minus, Activity, TrendingDown, AlertTriangle];
+
+const ALL_QUESTIONS: Q[] = [
+  // ── Patient Info (special group screen) ──────────────────────────────────
+  { id: "patient-info", section: "Patient Information", label: "Let's start with some basic information.", type: "patient-info" },
+
+  // ── Joint for today ──────────────────────────────────────────────────────
+  { id: "jointToday", section: "Appointment", label: "Which joint are we focusing on today?", type: "radio", field: "jointToday",
+    opts: [
+      { v: "left-hip",   l: "Left Hip",   icon: Footprints, cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "right-hip",  l: "Right Hip",  icon: Footprints, cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "left-knee",  l: "Left Knee",  icon: Footprints, cls: "border-violet-200 bg-violet-50 text-violet-800" },
+      { v: "right-knee", l: "Right Knee", icon: Footprints, cls: "border-violet-200 bg-violet-50 text-violet-800" },
+    ],
+  },
+  { id: "appointmentType", section: "Appointment", label: "What type is your upcoming appointment?", type: "radio", field: "appointmentType",
+    opts: [
+      { v: "virtual",   l: "Virtual",   icon: Video,   cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "in-person", l: "In-person", icon: MapPin,  cls: "border-green-200 bg-green-50 text-green-800" },
+    ],
+  },
+  { id: "canAttend", section: "Appointment", label: "Can you attend this appointment?", type: "radio", field: "canAttend",
+    opts: [
+      { v: "yes", l: "Yes, I'll be there",          icon: Check, cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "no",  l: "No — I need to reschedule",   icon: X,     cls: "border-red-200 bg-red-50 text-red-700" },
+    ],
+  },
+  { id: "needsInterpreter", section: "Appointment", label: "Do you require an interpreter?", type: "radio", field: "needsInterpreter",
+    opts: [
+      { v: "no",  l: "No",              icon: Check,     cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "yes", l: "Yes — I do",      icon: Languages, cls: "border-amber-200 bg-amber-50 text-amber-800" },
+    ],
+  },
+  { id: "interpreterLanguage", section: "Appointment", label: "What language do you need?", type: "text", field: "interpreterLanguage",
+    showIf: d => d.needsInterpreter === "yes",
+  },
+  { id: "supportPerson", section: "Appointment", label: "Will a caregiver or support person be joining you?", type: "radio", field: "supportPerson",
+    opts: [
+      { v: "no",  l: "No",  icon: User,  cls: "border-slate-200 bg-slate-50 text-slate-700" },
+      { v: "yes", l: "Yes", icon: Users, cls: "border-blue-200 bg-blue-50 text-blue-800" },
+    ],
+  },
+
+  // ── Section A — Pain ─────────────────────────────────────────────────────
+  { id: "a1", section: "A: Pain & Symptoms", source: "OHS Q1 / OKS Q1",
+    label: "How would you describe the pain you usually have from your hip/knee?",
+    type: "radio", field: "a1",
+    opts: S5(["None (0)", "Very mild (1)", "Mild (2)", "Moderate (3)", "Severe (4)"], painIcons),
+  },
+  { id: "a2", section: "A: Pain & Symptoms", source: "WOMAC P2",
+    label: "How much pain do you experience when walking or bearing weight on the joint?",
+    type: "radio", field: "a2",
+    opts: S5(["None (0)", "Mild (1)", "Moderate (2)", "Severe (3)", "Extreme (4)"], painIcons),
+  },
+  { id: "a3", section: "A: Pain & Symptoms", source: "WOMAC P4",
+    label: "How much pain or discomfort do you have when sitting, lying, or resting?",
+    type: "radio", field: "a3",
+    opts: S5(["None (0)", "Mild (1)", "Moderate (2)", "Severe (3)", "Extreme (4)"], painIcons),
+  },
+  { id: "a4", section: "A: Pain & Symptoms", source: "OHS Q12",
+    label: "How often have you been troubled by pain at night in bed (past month)?",
+    type: "radio", field: "a4",
+    opts: S5(["Not at all (0)", "1–2 nights (1)", "Some nights (2)", "Most nights (3)", "Every night (4)"], [CheckCircle2, Moon, Moon, Moon, AlertTriangle]),
+  },
+  { id: "a5", section: "A: Pain & Symptoms", source: "OHS Q10",
+    label: "Have you had sudden, severe pain (shooting, stabbing, spasms) from this joint?",
+    type: "radio", field: "a5",
+    opts: S5(["No days (0)", "1–2 days/mo (1)", "1–2 days/wk (2)", "Most days (3)", "Every day (4)"], [CheckCircle2, Minus, Activity, TrendingDown, Zap]),
+  },
+  { id: "a6", section: "A: Pain & Symptoms", source: "WOMAC S1",
+    label: "How severe is your joint stiffness after first waking in the morning?",
+    type: "radio", field: "a6",
+    opts: S5(["None (0)", "Mild (1)", "Moderate (2)", "Severe (3)", "Extreme (4)"], painIcons),
+  },
+
+  // ── Section B — Function ─────────────────────────────────────────────────
+  { id: "b1", section: "B: Functional Impact", source: "OHS Q6",
+    label: "How far are you able to walk before pain becomes severe?",
+    type: "radio", field: "b1",
+    opts: S5(["No limitation (0)", "> 30 min (1)", "16–30 min (2)", "6–15 min (3)", "< 5 min / housebound (4)"], [Footprints, Footprints, Footprints, Footprints, Ban]),
+  },
+  { id: "b2", section: "B: Functional Impact", source: "OHS Q7",
+    label: "How much difficulty going up and down stairs?",
+    type: "radio", field: "b2",
+    opts: S5(["None (0)", "Slight (1)", "Moderate (2)", "Severe (3)", "Unable (4)"], diffIcons),
+  },
+  { id: "b3", section: "B: Functional Impact", source: "OHS Q8",
+    label: "How much difficulty rising from a chair after sitting?",
+    type: "radio", field: "b3",
+    opts: S5(["None (0)", "Slight (1)", "Moderate (2)", "Severe (3)", "Unable (4)"], diffIcons),
+  },
+  { id: "b4", section: "B: Functional Impact", source: "OHS Q2",
+    label: "Difficulty washing, drying, or managing footwear?",
+    type: "radio", field: "b4",
+    opts: S5(["No trouble (0)", "A little (1)", "Moderate (2)", "Extreme (3)", "Impossible (4)"], diffIcons),
+  },
+  { id: "b5", section: "B: Functional Impact", source: "OHS Q5",
+    label: "Could you do shopping or community outings on your own?",
+    type: "radio", field: "b5",
+    opts: S5(["Yes, easily (0)", "Little difficulty (1)", "Moderate (2)", "Great difficulty (3)", "Impossible (4)"], [CheckCircle2, ShoppingBag, ShoppingBag, TrendingDown, Ban]),
+  },
+  { id: "b6", section: "B: Functional Impact", source: "OHS Q11",
+    label: "How much has pain interfered with your usual work or housework?",
+    type: "radio", field: "b6",
+    opts: S5(["Not at all (0)", "A little (1)", "Moderately (2)", "Greatly (3)", "Totally (4)"], [CheckCircle2, Briefcase, Briefcase, TrendingDown, AlertTriangle]),
+  },
+
+  // ── Section C — Quality of Life ──────────────────────────────────────────
+  { id: "c1", section: "C: Quality of Life", source: "EQ-5D VAS",
+    label: "On a scale of 0–10, how would you rate your overall health today? (0 = worst, 10 = best)",
+    type: "scale", field: "c1",
+  },
+  { id: "c2", section: "C: Quality of Life", source: "EQ-5D Dim 5",
+    label: "How much has your joint problem affected your mood or emotional wellbeing?",
+    type: "radio", field: "c2",
+    opts: [
+      { v: "0", l: "Not at all",  icon: CheckCircle2, cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "1", l: "Slightly",    icon: Minus,        cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "2", l: "Moderately",  icon: Brain,        cls: "border-amber-200 bg-amber-50 text-amber-800" },
+      { v: "3", l: "Severely",    icon: AlertTriangle, cls: "border-red-200 bg-red-50 text-red-800" },
+    ],
+  },
+  { id: "c3", section: "C: Quality of Life", source: "FJS-12",
+    label: "How often are you aware of your problem joint during daily activities?",
+    type: "radio", field: "c3",
+    opts: S5(["Never (0)", "Almost never (1)", "Sometimes (2)", "Most of the time (3)", "Constantly (4)"], freqIcons),
+  },
+  { id: "c4", section: "C: Quality of Life", source: "KOOS/HOOS QoL",
+    label: "How much have you had to change or give up activities you enjoy?",
+    type: "radio", field: "c4",
+    opts: S5(["Not at all (0)", "Mildly (1)", "Moderately (2)", "Severely (3)", "Completely (4)"], [CheckCircle2, Activity, Minus, TrendingDown, Ban]),
+  },
+
+  // ── Section D — Management ───────────────────────────────────────────────
+  { id: "d1", section: "D: Attempted Management", source: "HKPT Item 7",
+    label: "Which treatments have you tried for this joint? (select all that apply)",
+    type: "treatments",
+  },
+  { id: "d2", section: "D: Attempted Management", source: "HKPT",
+    label: "How long have you been receiving non-surgical treatment?",
+    type: "radio", field: "d2",
+    opts: [
+      { v: "0", l: "Haven't tried",  icon: X,           cls: "border-slate-200 bg-slate-50 text-slate-700" },
+      { v: "1", l: "< 3 months",     icon: Activity,    cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "2", l: "3–6 months",     icon: Calendar,    cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "3", l: "6–12 months",    icon: Calendar,    cls: "border-amber-200 bg-amber-50 text-amber-800" },
+      { v: "4", l: "> 12 months",    icon: AlertTriangle, cls: "border-red-200 bg-red-50 text-red-800" },
+    ],
+  },
+  { id: "d3", section: "D: Attempted Management", source: "HKPT",
+    label: "Overall, how much benefit have you gotten from treatments you've tried?",
+    type: "radio", field: "d3",
+    opts: [
+      { v: "0", l: "Good relief — joint manageable",           icon: CheckCircle2, cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "1", l: "Some relief — still significant limitation", icon: Activity,   cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "2", l: "Minimal relief — partially helped",         icon: Minus,      cls: "border-amber-200 bg-amber-50 text-amber-800" },
+      { v: "4", l: "No relief — treatments not helpful",        icon: AlertTriangle, cls: "border-red-200 bg-red-50 text-red-800" },
+    ],
+  },
+  { id: "d4", section: "D: Attempted Management", source: "WOMAC/HKPT",
+    label: "How often do you take pain medication for this joint?",
+    type: "radio", field: "d4",
+    opts: S5(["Never (0)", "Occasionally (1)", "Several days/wk (2)", "Daily (3)", "Daily & inadequate (4)"], [CheckCircle2, Pill, Pill, Pill, AlertTriangle]),
+  },
+  { id: "d5Medications", section: "D: Attempted Management",
+    label: "List any current medications you are taking for this joint:",
+    type: "textarea", field: "d5Medications",
+  },
+
+  // ── Symptom Update ───────────────────────────────────────────────────────
+  { id: "symptomChange", section: "Symptom Update",
+    label: "Since your last appointment, how have your symptoms changed overall?",
+    type: "radio", field: "symptomChange",
+    opts: [
+      { v: "significantly-improved", l: "Significantly improved", icon: TrendingUp,   cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "slightly-improved",      l: "Slightly improved",      icon: TrendingUp,   cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "no-change",              l: "No change",              icon: Minus,        cls: "border-slate-200 bg-slate-50 text-slate-700" },
+      { v: "slightly-worse",         l: "Slightly worse",         icon: TrendingDown, cls: "border-amber-200 bg-amber-50 text-amber-800" },
+      { v: "significantly-worse",    l: "Significantly worse",    icon: AlertTriangle, cls: "border-red-200 bg-red-50 text-red-800" },
+    ],
+  },
+  { id: "painRest", section: "Symptom Update",
+    label: "Current pain level at rest (0 = no pain, 10 = worst imaginable)",
+    type: "scale", field: "painRest",
+  },
+  { id: "painActivity", section: "Symptom Update",
+    label: "Current pain level with activity (0 = no pain, 10 = worst imaginable)",
+    type: "scale", field: "painActivity",
+  },
+  { id: "symptomFlags", section: "Symptom Update",
+    label: "Have you had any of the following since your last appointment? (tick all that apply)",
+    type: "checkbox-group",
+  },
+  { id: "symptomDescription", section: "Symptom Update",
+    label: "If you ticked any of the above, please describe briefly:",
+    type: "textarea", field: "symptomDescription",
+  },
+
+  // ── Medications ──────────────────────────────────────────────────────────
+  { id: "medsChanged", section: "Medications",
+    label: "Have there been any changes to your medications since your last appointment?",
+    type: "radio", field: "medsChanged",
+    opts: [
+      { v: "no",  l: "No changes",         icon: Check,    cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "yes", l: "Yes — changes made", icon: RefreshCw, cls: "border-amber-200 bg-amber-50 text-amber-800" },
+    ],
+  },
+  { id: "medsChangedDetails", section: "Medications",
+    label: "Please describe the medication changes:",
+    type: "textarea", field: "medsChangedDetails",
+    showIf: d => d.medsChanged === "yes",
+  },
+  { id: "painMedicationType", section: "Medications",
+    label: "Are you currently taking pain medication for this joint?",
+    type: "radio", field: "painMedicationType",
+    opts: [
+      { v: "none",                  l: "None",                      icon: Ban,         cls: "border-slate-200 bg-slate-50 text-slate-700" },
+      { v: "otc",                   l: "Over-the-counter",          icon: Pill,        cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "prescription-non-opioid", l: "Prescription (non-opioid)", icon: Stethoscope, cls: "border-amber-200 bg-amber-50 text-amber-800" },
+      { v: "prescription-opioid",   l: "Prescription opioid",       icon: AlertTriangle, cls: "border-red-200 bg-red-50 text-red-800" },
+    ],
+  },
+  { id: "opioidAdequate", section: "Medications",
+    label: "Is your opioid medication providing adequate pain control?",
+    type: "radio", field: "opioidAdequate",
+    showIf: d => d.painMedicationType === "prescription-opioid",
+    opts: [
+      { v: "yes",     l: "Yes, adequate",          icon: CheckCircle2,  cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "partial", l: "Partial relief",          icon: Minus,         cls: "border-amber-200 bg-amber-50 text-amber-800" },
+      { v: "no",      l: "No — inadequate control", icon: AlertTriangle, cls: "border-red-200 bg-red-50 text-red-800" },
+    ],
+  },
+  { id: "newTreatments", section: "Medications",
+    label: "Have you started any new treatments since your last visit?",
+    type: "radio", field: "newTreatments",
+    opts: [
+      { v: "no",  l: "No",                icon: X,     cls: "border-slate-200 bg-slate-50 text-slate-700" },
+      { v: "yes", l: "Yes — please share", icon: Check, cls: "border-blue-200 bg-blue-50 text-blue-800" },
+    ],
+  },
+  { id: "newTreatmentsDetails", section: "Medications",
+    label: "Describe the new treatment(s):",
+    type: "textarea", field: "newTreatmentsDetails",
+    showIf: d => d.newTreatments === "yes",
+  },
+
+  // ── Functional Status ────────────────────────────────────────────────────
+  { id: "functionalChange", section: "Functional Status",
+    label: "Compared to your last appointment, your ability to perform daily activities is:",
+    type: "radio", field: "functionalChange",
+    opts: [
+      { v: "better", l: "Better",        icon: TrendingUp,   cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "same",   l: "About the same", icon: Minus,       cls: "border-slate-200 bg-slate-50 text-slate-700" },
+      { v: "worse",  l: "Worse",          icon: TrendingDown, cls: "border-red-200 bg-red-50 text-red-800" },
+    ],
+  },
+  { id: "walkingAbility", section: "Functional Status",
+    label: "Are you currently able to walk outside your home?",
+    type: "radio", field: "walkingAbility",
+    opts: [
+      { v: "no-difficulty",  l: "Yes, without difficulty", icon: Footprints, cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "with-difficulty", l: "Yes, with difficulty",   icon: Activity,   cls: "border-amber-200 bg-amber-50 text-amber-800" },
+      { v: "housebound",      l: "No, housebound",         icon: Ban,        cls: "border-red-200 bg-red-50 text-red-800" },
+    ],
+  },
+  { id: "fallsInPastMonth", section: "Functional Status",
+    label: "Have you had any falls in the past month related to this joint?",
+    type: "radio", field: "fallsInPastMonth",
+    opts: [
+      { v: "no",  l: "No",  icon: CheckCircle2, cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "yes", l: "Yes", icon: AlertTriangle, cls: "border-red-200 bg-red-50 text-red-800" },
+    ],
+  },
+  { id: "fallsCount", section: "Functional Status",
+    label: "How many falls have you had?",
+    type: "text", field: "fallsCount",
+    showIf: d => d.fallsInPastMonth === "yes",
+  },
+
+  // ── Agenda ───────────────────────────────────────────────────────────────
+  { id: "mainIssue", section: "Agenda",
+    label: "What is the main thing you would like to address in today's appointment?",
+    type: "textarea", field: "mainIssue",
+  },
+  { id: "questionsForTeam", section: "Agenda",
+    label: "Do you have specific questions for your care team today?",
+    type: "textarea", field: "questionsForTeam",
+  },
+  { id: "otherCareTeamNotes", section: "Agenda",
+    label: "Is there anything else you would like your care team to know?",
+    type: "textarea", field: "otherCareTeamNotes",
+  },
+
+  // ── Tech check ───────────────────────────────────────────────────────────
+  { id: "techChecked", section: "Tech Check",
+    label: "Have you tested your device, camera, and microphone for this appointment?",
+    type: "radio", field: "techChecked",
+    opts: [
+      { v: "yes", l: "Yes, all working",          icon: Wifi,  cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "no",  l: "No — I need help",          icon: X,     cls: "border-red-200 bg-red-50 text-red-800" },
+      { v: "na",  l: "N/A — In-person visit",     icon: MapPin, cls: "border-slate-200 bg-slate-50 text-slate-700" },
+    ],
+  },
+  { id: "deviceType", section: "Tech Check",
+    label: "What device will you be using?",
+    type: "radio", field: "deviceType",
+    opts: [
+      { v: "smartphone", l: "Smartphone", icon: Smartphone, cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "tablet",     l: "Tablet",     icon: Tablet,     cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "laptop",     l: "Laptop",     icon: Laptop,     cls: "border-blue-200 bg-blue-50 text-blue-800" },
+      { v: "other",      l: "Other",      icon: Monitor,    cls: "border-slate-200 bg-slate-50 text-slate-700" },
+    ],
+  },
+  { id: "privateSpace", section: "Tech Check",
+    label: "Do you have a private, quiet space available for this appointment?",
+    type: "radio", field: "privateSpace",
+    opts: [
+      { v: "yes", l: "Yes, private space ready",     icon: Lock, cls: "border-green-200 bg-green-50 text-green-800" },
+      { v: "no",  l: "No — limited privacy",         icon: Volume2, cls: "border-amber-200 bg-amber-50 text-amber-800" },
+    ],
+  },
 ];
 
-// ─── Step Components ────────────────────────────────────────
+// ─── Pictorial Option Card ────────────────────────────────────────────────────
 
-function StepHeader({ d, u }: { d: PreVisitFormData; u: (p: Partial<PreVisitFormData>) => void }) {
+function OptionCard({ opt, selected, onClick }: { opt: Opt; selected: boolean; onClick: () => void }) {
+  const Icon = opt.icon;
   return (
-    <div className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-        <div className="text-sm text-blue-800">
-          <p className="font-medium mb-1">Pre-Visit Patient Questionnaire</p>
-          <p>Please complete sections A through D before your upcoming appointment. This helps your care team prepare for your visit.</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <FormField label="Patient Name">
-          <BigInput value={d.patientName} onChange={e => u({ patientName: e.target.value })} placeholder="Full name" />
-        </FormField>
-        <FormField label="Date of Birth">
-          <DatePicker value={d.dob} onChange={v => u({ dob: v })} placeholder="Select date of birth" />
-        </FormField>
-        <FormField label="Assessment Date">
-          <DatePicker value={d.date} onChange={v => u({ date: v })} placeholder="Select assessment date" />
-        </FormField>
-        <FormField label="NHI / MRN">
-          <BigInput value={d.nhiMrn} onChange={e => u({ nhiMrn: e.target.value })} placeholder="Patient ID" />
-        </FormField>
-      </div>
-
-      <FormField label="Joint Assessed">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { v: "hip-l", l: "Hip (Left)" },
-            { v: "hip-r", l: "Hip (Right)" },
-            { v: "knee-l", l: "Knee (Left)" },
-            { v: "knee-r", l: "Knee (Right)" },
-          ].map(j => (
-            <BigRadioOption key={j.v} value={j.v} label={j.l} selected={d.jointAssessed === j.v} onSelect={v => u({ jointAssessed: v })} />
-          ))}
-        </div>
-      </FormField>
-
-      <FormField label="Referring Clinician">
-        <BigInput value={d.referringClinician} onChange={e => u({ referringClinician: e.target.value })} placeholder="Dr. ..." />
-      </FormField>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative flex flex-col items-center justify-center gap-2.5 p-4 rounded-2xl border-2 transition-all duration-150 text-center min-h-[96px] cursor-pointer select-none",
+        selected
+          ? "border-primary bg-primary/5 text-primary shadow-md ring-2 ring-primary/20"
+          : (opt.cls ?? "border-slate-200 bg-white text-slate-700 hover:border-primary/30 hover:bg-blue-50/20")
+      )}
+    >
+      {selected && (
+        <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center">
+          <Check size={11} />
+        </span>
+      )}
+      <Icon size={24} className={selected ? "text-primary" : undefined} />
+      <span className="text-[12px] font-bold leading-snug">{opt.l}</span>
+    </button>
   );
 }
 
-function StepA({ d, u }: { d: PreVisitFormData; u: (p: Partial<PreVisitFormData>) => void }) {
-  const q = (key: "a1"|"a2"|"a3"|"a4"|"a5"|"a6", question: string, options: { v: string; l: string }[], source: string) => (
-    <FormField label={question} source={source}>
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
-        {options.map(o => (
-          <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d[key] === o.v} onSelect={v => u({ [key]: v })} />
+// ─── Pain Scale ──────────────────────────────────────────────────────────────
+
+function PainScale({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const scoreColor = (v: number) =>
+    v <= 2 ? "bg-green-500 text-white border-green-500"
+    : v <= 4 ? "bg-lime-500 text-white border-lime-500"
+    : v <= 6 ? "bg-amber-500 text-white border-amber-500"
+    : v <= 8 ? "bg-orange-500 text-white border-orange-500"
+    : "bg-red-500 text-white border-red-500";
+  const label = (v: number) => v === 0 ? "No pain" : v <= 3 ? "Mild" : v <= 5 ? "Moderate" : v <= 7 ? "Severe" : v <= 9 ? "Very severe" : "Worst possible";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between text-[11px] text-slate-400 font-semibold px-1">
+        <span>0 — No pain</span><span>10 — Worst possible</span>
+      </div>
+      <div className="flex flex-wrap gap-2 justify-center">
+        {Array.from({ length: 11 }, (_, i) => (
+          <button key={i} type="button" onClick={() => onChange(String(i))}
+            className={cn(
+              "w-11 h-11 rounded-full border-2 font-black text-[14px] transition-all",
+              value === String(i) ? scoreColor(i) + " scale-110 shadow-lg" : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
+            )}
+          >{i}</button>
         ))}
       </div>
-    </FormField>
-  );
-
-  const severity5 = (labels: string[]) => labels.map((l, i) => ({ v: String(i), l }));
-
-  return (
-    <div className="space-y-8">
-      <p className="text-sm text-muted-foreground italic">Based on: Oxford Hip/Knee Score, WOMAC Pain subscale</p>
-
-      {q("a1", "A1 — How would you describe the pain you usually have from your hip/knee?",
-        severity5(["None (0)", "Very mild (1)", "Mild (2)", "Moderate (3)", "Severe (4)"]),
-        "OHS Q1 / OKS Q1")}
-
-      {q("a2", "A2 — How much pain do you experience when walking or bearing weight on the joint?",
-        severity5(["None (0)", "Mild (1)", "Moderate (2)", "Severe (3)", "Extreme (4)"]),
-        "WOMAC P2")}
-
-      {q("a3", "A3 — How much pain or discomfort do you have when sitting, lying, or resting?",
-        severity5(["None (0)", "Mild (1)", "Moderate (2)", "Severe (3)", "Extreme (4)"]),
-        "WOMAC P4")}
-
-      {q("a4", "A4 — How often have you been troubled by pain at night in bed (past month)?",
-        severity5(["Not at all (0)", "1-2 nights (1)", "Some nights (2)", "Most nights (3)", "Every night (4)"]),
-        "OHS Q12")}
-
-      {q("a5", "A5 — Have you had sudden, severe pain (shooting, stabbing, spasms) from this joint?",
-        severity5(["No days (0)", "1-2 days/mo (1)", "1-2 days/wk (2)", "Most days (3)", "Every day (4)"]),
-        "OHS Q10")}
-
-      {q("a6", "A6 — How severe is your joint stiffness after first waking in the morning?",
-        severity5(["None (0)", "Mild (1)", "Moderate (2)", "Severe (3)", "Extreme (4)"]),
-        "WOMAC S1")}
+      {value !== "" && (
+        <p className={cn("text-center text-[13px] font-bold",
+          Number(value) <= 3 ? "text-green-600" : Number(value) <= 6 ? "text-amber-600" : "text-red-600"
+        )}>{label(Number(value))} — {value}/10</p>
+      )}
     </div>
   );
 }
 
-function StepB({ d, u }: { d: PreVisitFormData; u: (p: Partial<PreVisitFormData>) => void }) {
-  const q = (key: "b1"|"b2"|"b3"|"b4"|"b5"|"b6", question: string, options: { v: string; l: string }[], source: string) => (
-    <FormField label={question} source={source}>
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
-        {options.map(o => (
-          <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d[key] === o.v} onSelect={v => u({ [key]: v })} />
-        ))}
-      </div>
-    </FormField>
-  );
-
-  return (
-    <div className="space-y-8">
-      <p className="text-sm text-muted-foreground italic">Based on: Oxford Hip/Knee Score, HOOS/KOOS ADL subscale</p>
-
-      {q("b1", "B1 — How far are you able to walk before pain becomes severe?",
-        [{ v: "0", l: "No limitation" }, { v: "1", l: ">30 min" }, { v: "2", l: "16-30 min" }, { v: "3", l: "6-15 min" }, { v: "4", l: "<5 min / housebound" }],
-        "OHS Q6")}
-
-      {q("b2", "B2 — How much difficulty going up and down stairs?",
-        [{ v: "0", l: "None" }, { v: "1", l: "Slight" }, { v: "2", l: "Moderate" }, { v: "3", l: "Severe" }, { v: "4", l: "Unable" }],
-        "OHS Q7")}
-
-      {q("b3", "B3 — How much difficulty rising from a chair after sitting?",
-        [{ v: "0", l: "None" }, { v: "1", l: "Slight" }, { v: "2", l: "Moderate" }, { v: "3", l: "Severe" }, { v: "4", l: "Unable" }],
-        "OHS Q8")}
-
-      {q("b4", "B4 — Difficulty washing, drying, or managing footwear?",
-        [{ v: "0", l: "No trouble" }, { v: "1", l: "Little" }, { v: "2", l: "Moderate" }, { v: "3", l: "Extreme" }, { v: "4", l: "Impossible" }],
-        "OHS Q2")}
-
-      {q("b5", "B5 — Could you do shopping or community outings on your own?",
-        [{ v: "0", l: "Yes, easily" }, { v: "1", l: "Little difficulty" }, { v: "2", l: "Moderate" }, { v: "3", l: "Great difficulty" }, { v: "4", l: "Impossible" }],
-        "OHS Q5")}
-
-      {q("b6", "B6 — How much has pain interfered with usual work / housework?",
-        [{ v: "0", l: "Not at all" }, { v: "1", l: "A little" }, { v: "2", l: "Moderately" }, { v: "3", l: "Greatly" }, { v: "4", l: "Totally" }],
-        "OHS Q11")}
-    </div>
-  );
-}
-
-function StepC({ d, u }: { d: PreVisitFormData; u: (p: Partial<PreVisitFormData>) => void }) {
-  return (
-    <div className="space-y-8">
-      <p className="text-sm text-muted-foreground italic">Based on: EQ-5D-5L, Forgotten Joint Score (FJS-12)</p>
-
-      <FormField label="C1 — On a scale of 0 to 10, how would you rate your overall health today?" source="EQ-5D VAS" hint="0 = worst imaginable, 10 = best imaginable">
-        <div className="grid grid-cols-6 sm:grid-cols-11 gap-1">
-          {Array.from({ length: 11 }, (_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => u({ c1: String(i) })}
-              className={cn(
-                "py-3 rounded-lg border-2 text-center text-[15px] font-medium transition-all",
-                d.c1 === String(i)
-                  ? "border-primary bg-primary text-white"
-                  : "border-border hover:border-primary/30 hover:bg-muted/30"
-              )}
-            >
-              {i}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">Scoring: 0-4 = 3 pts, 5-6 = 2 pts, 7-8 = 1 pt, 9-10 = 0 pts (higher = worse)</p>
-      </FormField>
-
-      <FormField label="C2 — How much has your joint problem affected your mood, worry, or emotional wellbeing?" source="EQ-5D Dim 5">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {[{ v: "0", l: "Not at all" }, { v: "1", l: "Slightly" }, { v: "2", l: "Moderately" }, { v: "3", l: "Severely" }].map(o => (
-            <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.c2 === o.v} onSelect={v => u({ c2: v })} />
-          ))}
-        </div>
-      </FormField>
-
-      <FormField label="C3 — How often are you aware of your problem joint during daily activities?" source="FJS-12">
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
-          {[{ v: "0", l: "Never" }, { v: "1", l: "Almost never" }, { v: "2", l: "Sometimes" }, { v: "3", l: "Most of the time" }, { v: "4", l: "Constantly" }].map(o => (
-            <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.c3 === o.v} onSelect={v => u({ c3: v })} />
-          ))}
-        </div>
-      </FormField>
-
-      <FormField label="C4 — How much have you had to change or give up activities you enjoy?" source="KOOS/HOOS QoL">
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
-          {[{ v: "0", l: "Not at all" }, { v: "1", l: "Mildly" }, { v: "2", l: "Moderately" }, { v: "3", l: "Severely" }, { v: "4", l: "Completely" }].map(o => (
-            <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.c4 === o.v} onSelect={v => u({ c4: v })} />
-          ))}
-        </div>
-      </FormField>
-    </div>
-  );
-}
-
-function StepD({ d, u }: { d: PreVisitFormData; u: (p: Partial<PreVisitFormData>) => void }) {
-  const tx = d.d1Treatments;
-  const setTx = (key: keyof typeof tx, val: boolean) => u({ d1Treatments: { ...tx, [key]: val } });
-
-  return (
-    <div className="space-y-8">
-      <p className="text-sm text-muted-foreground italic">Based on: HKPT Failed Conservative Treatment</p>
-
-      <FormField label="D1 — Which treatments have you tried for this joint? (check all)" source="HKPT Item 7">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <BigCheckbox checked={tx.physio} onCheckedChange={v => setTx("physio", v)} label="Physiotherapy" />
-          <BigCheckbox checked={tx.bracing} onCheckedChange={v => setTx("bracing", v)} label="Bracing" />
-          <BigCheckbox checked={tx.antiInflammatories} onCheckedChange={v => setTx("antiInflammatories", v)} label="Anti-inflammatories" />
-          <BigCheckbox checked={tx.injections} onCheckedChange={v => setTx("injections", v)} label="Injections" />
-          <BigCheckbox checked={tx.weightLoss} onCheckedChange={v => setTx("weightLoss", v)} label="Weight loss" />
-          <BigCheckbox checked={tx.exercise} onCheckedChange={v => setTx("exercise", v)} label="Exercise program" />
-          <BigCheckbox checked={tx.acupuncture} onCheckedChange={v => setTx("acupuncture", v)} label="Acupuncture" />
-          <BigCheckbox checked={tx.otherTreatment} onCheckedChange={v => setTx("otherTreatment", v)} label="Other" />
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">Scoring: 3+ tried = 0 pts, 1-2 tried = 2 pts, none = 4 pts</p>
-      </FormField>
-
-      <FormField label="D2 — How long have you been receiving non-surgical treatment?" source="HKPT">
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
-          {[{ v: "0", l: "Haven't tried" }, { v: "1", l: "< 3 months" }, { v: "2", l: "3-6 months" }, { v: "3", l: "6-12 months" }, { v: "4", l: "> 12 months" }].map(o => (
-            <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.d2 === o.v} onSelect={v => u({ d2: v })} />
-          ))}
-        </div>
-      </FormField>
-
-      <FormField label="D3 — Overall, how much benefit from treatments you've tried?" source="HKPT">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {[
-            { v: "0", l: "Good relief — joint manageable" },
-            { v: "1", l: "Some relief — still significant limitation" },
-            { v: "2", l: "Minimal relief — partially helped" },
-            { v: "4", l: "No relief — treatments not helpful" },
-          ].map(o => (
-            <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.d3 === o.v} onSelect={v => u({ d3: v })} />
-          ))}
-        </div>
-      </FormField>
-
-      <FormField label="D4 — How often do you take pain medication for this joint?" source="WOMAC/HKPT">
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
-          {[{ v: "0", l: "Never" }, { v: "1", l: "Occasionally" }, { v: "2", l: "Several days/wk" }, { v: "3", l: "Daily" }, { v: "4", l: "Daily & inadequate" }].map(o => (
-            <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.d4 === o.v} onSelect={v => u({ d4: v })} />
-          ))}
-        </div>
-      </FormField>
-
-      <FormField label="D5 — List current medications for this joint">
-        <Textarea value={d.d5Medications} onChange={e => u({ d5Medications: e.target.value })} className="text-[15px] min-h-[80px]" placeholder="e.g. Ibuprofen 400mg twice daily, Acetaminophen as needed..." />
-      </FormField>
-
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-        <p className="font-medium">Next step:</p>
-        <p className="mt-1">Continue to the final page for Part 5 questions and agenda, then Part 6 technical check-in for virtual appointments.</p>
-      </div>
-    </div>
-  );
-}
-
-function StepInstrument2({ d, u }: { d: PreVisitFormData; u: (p: Partial<PreVisitFormData>) => void }) {
-  const setField = <K extends keyof PreVisitFormData>(field: K, value: PreVisitFormData[K]) => {
-    u({ [field]: value } as Pick<PreVisitFormData, K>);
-  };
-
-  return (
-    <div className="space-y-8">
-      <p className="text-sm text-muted-foreground italic">Completed by the patient 24–48 hours before each scheduled appointment.</p>
-
-      <div className="space-y-6 rounded-xl border border-border bg-white p-5 shadow-sm">
-        <div className="space-y-3">
-          <h3 className="text-base font-semibold font-display tracking-tight">Part 1 — Appointment Confirmation</h3>
-          <FormField label="Upcoming appointment date">
-            <DatePicker value={d.appointmentDate} onChange={v => u({ appointmentDate: v })} placeholder="Select appointment date" />
-          </FormField>
-
-          <FormField label="Appointment type">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { v: "virtual", l: "Virtual" },
-                { v: "in-person", l: "In-person" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.appointmentType === o.v} onSelect={v => setField("appointmentType", v as PreVisitFormData["appointmentType"]) } />
-              ))}
-            </div>
-          </FormField>
-
-          <FormField label="Do you confirm you are able to attend this appointment?">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { v: "yes", l: "Yes" },
-                { v: "no", l: "No — I need to reschedule" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.canAttend === o.v} onSelect={v => setField("canAttend", v as PreVisitFormData["canAttend"]) } />
-              ))}
-            </div>
-          </FormField>
-
-          <FormField label="Do you require an interpreter for this appointment?">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { v: "no", l: "No" },
-                { v: "yes", l: "Yes — language" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.needsInterpreter === o.v} onSelect={v => setField("needsInterpreter", v as PreVisitFormData["needsInterpreter"]) } />
-              ))}
-            </div>
-            {d.needsInterpreter === "yes" && (
-              <BigInput value={d.interpreterLanguage} onChange={e => u({ interpreterLanguage: e.target.value })} placeholder="Language" />
-            )}
-          </FormField>
-
-          <FormField label="Will a caregiver or support person be joining you?">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { v: "no", l: "No" },
-                { v: "yes", l: "Yes" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.supportPerson === o.v} onSelect={v => setField("supportPerson", v as PreVisitFormData["supportPerson"]) } />
-              ))}
-            </div>
-          </FormField>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-base font-semibold font-display tracking-tight">Part 2 — Symptom Update Since Last Visit</h3>
-          <FormField label="Joint being assessed today">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { v: "left-hip", l: "Left Hip" },
-                { v: "right-hip", l: "Right Hip" },
-                { v: "left-knee", l: "Left Knee" },
-                { v: "right-knee", l: "Right Knee" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.jointToday === o.v} onSelect={v => setField("jointToday", v as PreVisitFormData["jointToday"]) } />
-              ))}
-            </div>
-          </FormField>
-
-          <FormField label="Since your last appointment, how have your symptoms changed overall?">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { v: "significantly-improved", l: "Significantly improved" },
-                { v: "slightly-improved", l: "Slightly improved" },
-                { v: "no-change", l: "No change" },
-                { v: "slightly-worse", l: "Slightly worse" },
-                { v: "significantly-worse", l: "Significantly worse" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.symptomChange === o.v} onSelect={v => setField("symptomChange", v as PreVisitFormData["symptomChange"]) } />
-              ))}
-            </div>
-          </FormField>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Current pain level at rest (0 = no pain, 10 = worst imaginable)">
-              <div className="grid grid-cols-6 sm:grid-cols-11 gap-1">
-                {Array.from({ length: 11 }, (_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => u({ painRest: String(i) })}
-                    className={cn(
-                      "py-2 rounded-lg border-2 text-center text-[13px] font-medium transition-all",
-                      d.painRest === String(i) ? "border-primary bg-primary text-white" : "border-border hover:border-primary/30 hover:bg-muted/30"
-                    )}
-                  >
-                    {i}
-                  </button>
-                ))}
-              </div>
-            </FormField>
-            <FormField label="Current pain level with activity (0 = no pain, 10 = worst imaginable)">
-              <div className="grid grid-cols-6 sm:grid-cols-11 gap-1">
-                {Array.from({ length: 11 }, (_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => u({ painActivity: String(i) })}
-                    className={cn(
-                      "py-2 rounded-lg border-2 text-center text-[13px] font-medium transition-all",
-                      d.painActivity === String(i) ? "border-primary bg-primary text-white" : "border-border hover:border-primary/30 hover:bg-muted/30"
-                    )}
-                  >
-                    {i}
-                  </button>
-                ))}
-              </div>
-            </FormField>
-          </div>
-
-          <FormField label="Have you had any of the following since your last appointment? (tick all that apply)">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <BigCheckbox checked={d.symptomIncreasePain} onCheckedChange={v => u({ symptomIncreasePain: v })} label="Sudden significant increase in pain" />
-              <BigCheckbox checked={d.symptomSwelling} onCheckedChange={v => u({ symptomSwelling: v })} label="New swelling or redness in the joint" />
-              <BigCheckbox checked={d.symptomGivingWay} onCheckedChange={v => u({ symptomGivingWay: v })} label="Joint giving way or locking" />
-              <BigCheckbox checked={d.symptomFall} onCheckedChange={v => u({ symptomFall: v })} label="Fall related to the joint" />
-              <BigCheckbox checked={d.symptomWalkingDifficulty} onCheckedChange={v => u({ symptomWalkingDifficulty: v })} label="New difficulty walking or bearing weight" />
-              <BigCheckbox checked={d.symptomNeuro} onCheckedChange={v => u({ symptomNeuro: v })} label="New neurological symptoms (numbness, tingling, weakness)" />
-              <BigCheckbox checked={d.symptomFever} onCheckedChange={v => u({ symptomFever: v })} label="Fever or chills" />
-              <BigCheckbox checked={d.symptomNone} onCheckedChange={v => u({ symptomNone: v })} label="None of the above" />
-            </div>
-          </FormField>
-
-          <FormField label="If you ticked any of the above, please describe briefly:">
-            <Textarea value={d.symptomDescription} onChange={e => u({ symptomDescription: e.target.value })} className="text-[15px] min-h-[100px]" placeholder="Describe any changes or concerns..." />
-          </FormField>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-base font-semibold font-display tracking-tight">Part 3 — Medications & Management Update</h3>
-
-          <FormField label="Have there been any changes to your medications since your last appointment?">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { v: "no", l: "No" },
-                { v: "yes", l: "Yes — please describe" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.medsChanged === o.v} onSelect={v => setField("medsChanged", v as PreVisitFormData["medsChanged"]) } />
-              ))}
-            </div>
-            {d.medsChanged === "yes" && (
-              <BigInput value={d.medsChangedDetails} onChange={e => u({ medsChangedDetails: e.target.value })} placeholder="Describe medication changes" />
-            )}
-          </FormField>
-
-          <FormField label="Are you currently taking pain medication for this joint?">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { v: "none", l: "No" },
-                { v: "otc", l: "Over-the-counter" },
-                { v: "prescription-non-opioid", l: "Prescription (non-opioid)" },
-                { v: "prescription-opioid", l: "Prescription opioid" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.painMedicationType === o.v} onSelect={v => setField("painMedicationType", v as PreVisitFormData["painMedicationType"]) } />
-              ))}
-            </div>
-          </FormField>
-
-          {d.painMedicationType === "prescription-opioid" && (
-            <FormField label="If taking opioid medication, is it providing adequate pain control?">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {[
-                  { v: "yes", l: "Yes" },
-                  { v: "partial", l: "Partial relief" },
-                  { v: "no", l: "No — inadequate despite current dose" },
-                ].map(o => (
-                  <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.opioidAdequate === o.v} onSelect={v => setField("opioidAdequate", v as PreVisitFormData["opioidAdequate"]) } />
-                ))}
-              </div>
-            </FormField>
-          )}
-
-          <FormField label="Have you started any new treatments since your last visit? (e.g. physiotherapy, injection, new medication)">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { v: "no", l: "No" },
-                { v: "yes", l: "Yes — please describe" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.newTreatments === o.v} onSelect={v => setField("newTreatments", v as PreVisitFormData["newTreatments"]) } />
-              ))}
-            </div>
-            {d.newTreatments === "yes" && (
-              <BigInput value={d.newTreatmentsDetails} onChange={e => u({ newTreatmentsDetails: e.target.value })} placeholder="Describe new treatments" />
-            )}
-          </FormField>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-base font-semibold font-display tracking-tight">Part 4 — Functional Status Update</h3>
-
-          <FormField label="Compared to your last appointment, your ability to perform daily activities is:">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {[
-                { v: "better", l: "Better" },
-                { v: "same", l: "About the same" },
-                { v: "worse", l: "Worse" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.functionalChange === o.v} onSelect={v => setField("functionalChange", v as PreVisitFormData["functionalChange"]) } />
-              ))}
-            </div>
-          </FormField>
-
-          <FormField label="Are you currently able to walk outside your home?">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {[
-                { v: "no-difficulty", l: "Yes, without difficulty" },
-                { v: "with-difficulty", l: "Yes, with difficulty" },
-                { v: "housebound", l: "No, housebound" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.walkingAbility === o.v} onSelect={v => setField("walkingAbility", v as PreVisitFormData["walkingAbility"]) } />
-              ))}
-            </div>
-          </FormField>
-
-          <FormField label="Have you had any falls in the past month related to this joint?">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {[
-                { v: "no", l: "No" },
-                { v: "yes", l: "Yes — number of falls" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.fallsInPastMonth === o.v} onSelect={v => setField("fallsInPastMonth", v as PreVisitFormData["fallsInPastMonth"]) } />
-              ))}
-            </div>
-            {d.fallsInPastMonth === "yes" && (
-              <BigInput value={d.fallsCount} onChange={e => u({ fallsCount: e.target.value })} placeholder="Number of falls" />
-            )}
-          </FormField>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-base font-semibold font-display tracking-tight">Part 5 — Questions & Agenda for Today's Appointment</h3>
-
-          <FormField label="What is the main thing you would like to address in today's appointment?">
-            <Textarea value={d.mainIssue} onChange={e => u({ mainIssue: e.target.value })} className="text-[15px] min-h-[100px]" placeholder="Write your main concern..." />
-          </FormField>
-
-          <FormField label="Do you have specific questions for your care team today?">
-            <Textarea value={d.questionsForTeam} onChange={e => u({ questionsForTeam: e.target.value })} className="text-[15px] min-h-[100px]" placeholder="List questions for your provider..." />
-          </FormField>
-
-          <FormField label="Is there anything else you would like your care team to know before the appointment?">
-            <Textarea value={d.otherCareTeamNotes} onChange={e => u({ otherCareTeamNotes: e.target.value })} className="text-[15px] min-h-[100px]" placeholder="Additional information for the care team..." />
-          </FormField>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-base font-semibold font-display tracking-tight">Part 6 — Technical Check-In (Virtual Appointments Only)</h3>
-
-          <FormField label="Have you tested your device, camera, and microphone for this appointment?">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {[
-                { v: "yes", l: "Yes, everything is working" },
-                { v: "no", l: "No, I need help" },
-                { v: "na", l: "Not applicable (in-person)" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.techChecked === o.v} onSelect={v => setField("techChecked", v as PreVisitFormData["techChecked"]) } />
-              ))}
-            </div>
-          </FormField>
-
-          <FormField label="What device will you be using?">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { v: "smartphone", l: "Smartphone" },
-                { v: "tablet", l: "Tablet" },
-                { v: "laptop", l: "Laptop / Computer" },
-                { v: "other", l: "Other" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.deviceType === o.v} onSelect={v => setField("deviceType", v as PreVisitFormData["deviceType"]) } />
-              ))}
-            </div>
-            {d.deviceType === "other" && (
-              <BigInput value={d.deviceTypeOther} onChange={e => u({ deviceTypeOther: e.target.value })} placeholder="Other device" />
-            )}
-          </FormField>
-
-          <FormField label="Do you have a private, quiet space available for this appointment?">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { v: "yes", l: "Yes" },
-                { v: "no", l: "No — I may have limited privacy" },
-              ].map(o => (
-                <BigRadioOption key={o.v} value={o.v} label={o.l} selected={d.privateSpace === o.v} onSelect={v => setField("privateSpace", v as PreVisitFormData["privateSpace"]) } />
-              ))}
-            </div>
-          </FormField>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Main component ─────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function PreVisitForm() {
-  const [step, setStep] = useState(0);
+  const [qIdx, setQIdx] = useState(0);
   const [formData, setFormData] = useState<PreVisitFormData>(getInitialData);
   const [submitted, setSubmitted] = useState(false);
 
-  const update = useCallback((partial: Partial<PreVisitFormData>) => {
-    setFormData(prev => ({ ...prev, ...partial }));
+  const update = useCallback((patch: Partial<PreVisitFormData>) => {
+    setFormData(prev => ({ ...prev, ...patch }));
   }, []);
 
-  const totalSteps = STEPS.length;
-  const progress = ((step + 1) / totalSteps) * 100;
+  const questions = useMemo(
+    () => ALL_QUESTIONS.filter(q => !q.showIf || q.showIf(formData)),
+    [formData]
+  );
 
-  const goNext = () => { if (step < totalSteps - 1) setStep(s => s + 1); window.scrollTo(0, 0); };
-  const goPrev = () => { if (step > 0) setStep(s => s - 1); window.scrollTo(0, 0); };
+  const currentQ = questions[qIdx];
+  const progress = ((qIdx + 1) / questions.length) * 100;
 
-  const handleSubmit = () => {
-    setSubmitted(true);
-    window.scrollTo(0, 0);
+  const goNext = () => {
+    if (qIdx < questions.length - 1) setQIdx(i => i + 1);
+    else setSubmitted(true);
   };
+  const goPrev = () => { if (qIdx > 0) setQIdx(i => i - 1); };
 
   if (submitted) {
     return (
-      <div className="animate-enter">
-        <Card className="shadow-sm border-border max-w-2xl">
-          <CardContent className="p-8 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-              <Check className="w-8 h-8 text-green-600" />
-            </div>
-            <h2 className="text-xl font-semibold font-display tracking-tight">Pre-Visit Form Submitted</h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Thank you, {formData.patientName || "patient"}. Your responses have been recorded and will be reviewed by your care team before your appointment.
-            </p>
-            <Button variant="outline" onClick={() => { setSubmitted(false); setStep(0); }} className="mt-4">
-              Review Responses
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-5">
+        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+          <CheckCircle2 className="w-8 h-8 text-green-600" />
+        </div>
+        <div className="text-center">
+          <h2 className="text-xl font-bold font-display text-slate-900">Pre-Visit Form Submitted</h2>
+          <p className="text-sm text-slate-500 mt-1 max-w-sm">Thank you, {formData.patientName || "patient"}. Your responses have been recorded for your care team.</p>
+        </div>
+        <button onClick={() => { setSubmitted(false); setQIdx(0); }}
+          className="text-sm font-semibold text-primary hover:underline">
+          Review responses
+        </button>
       </div>
     );
   }
 
-  return (
-    <div className="animate-enter">
-      {/* Progress */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-foreground">Step {step + 1} of {totalSteps}</span>
-          <span className="text-sm font-medium text-primary">{STEPS[step]}</span>
+  const renderQuestion = (q: Q) => {
+    // ── Patient Info group ──────────────────────────────────────────────────
+    if (q.type === "patient-info") {
+      return (
+        <div className="space-y-4 w-full max-w-lg mx-auto">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Patient Name</label>
+              <input value={formData.patientName} onChange={e => update({ patientName: e.target.value })}
+                placeholder="Full name" className="w-full border-b-2 border-slate-200 focus:border-primary outline-none py-2 text-[15px] bg-transparent" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Date of Birth</label>
+              <DatePicker value={formData.dob} onChange={v => update({ dob: v })} placeholder="Select DOB" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Assessment Date</label>
+              <DatePicker value={formData.date} onChange={v => update({ date: v })} placeholder="Select date" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">NHI / MRN</label>
+              <input value={formData.nhiMrn} onChange={e => update({ nhiMrn: e.target.value })}
+                placeholder="Patient ID" className="w-full border-b-2 border-slate-200 focus:border-primary outline-none py-2 text-[15px] bg-transparent" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Referring Clinician</label>
+            <input value={formData.referringClinician} onChange={e => update({ referringClinician: e.target.value })}
+              placeholder="Dr. ..." className="w-full border-b-2 border-slate-200 focus:border-primary outline-none py-2 text-[15px] bg-transparent" />
+          </div>
         </div>
-        <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
-          <div className="h-full bg-primary rounded-full transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
+      );
+    }
+
+    // ── Treatments checkbox group ───────────────────────────────────────────
+    if (q.type === "treatments") {
+      const tx = formData.d1Treatments;
+      const items: { key: keyof typeof tx; l: string; icon: Icon }[] = [
+        { key: "physio",            l: "Physiotherapy",       icon: Dumbbell },
+        { key: "bracing",           l: "Bracing",             icon: Shield },
+        { key: "antiInflammatories", l: "Anti-inflammatories", icon: Pill },
+        { key: "injections",        l: "Injections",          icon: FlaskConical },
+        { key: "weightLoss",        l: "Weight loss",         icon: Scale },
+        { key: "exercise",          l: "Exercise program",    icon: Activity },
+        { key: "acupuncture",       l: "Acupuncture",         icon: Stethoscope },
+        { key: "otherTreatment",    l: "Other",               icon: ClipboardList },
+      ];
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl mx-auto">
+          {items.map(item => {
+            const checked = tx[item.key];
+            const Icon = item.icon;
+            return (
+              <button key={item.key} type="button"
+                onClick={() => update({ d1Treatments: { ...tx, [item.key]: !checked } })}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 min-h-[90px] transition-all",
+                  checked ? "border-primary bg-primary/5 text-primary shadow-md ring-2 ring-primary/20" : "border-slate-200 bg-white text-slate-600 hover:border-primary/30"
+                )}
+              >
+                {checked && <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center"><Check size={9} /></span>}
+                <Icon size={22} className={checked ? "text-primary" : undefined} />
+                <span className="text-[11px] font-bold text-center leading-snug">{item.l}</span>
+              </button>
+            );
+          })}
         </div>
-        <div className="flex justify-between mt-3 px-1">
-          {STEPS.map((s, i) => (
-            <button
-              key={i} type="button"
-              onClick={() => { setStep(i); window.scrollTo(0, 0); }}
-              className={cn(
-                "w-2.5 h-2.5 rounded-full transition-all",
-                i === step ? "bg-primary scale-125" : i < step ? "bg-primary/40" : "bg-muted-foreground/20"
-              )}
-              title={s}
-            />
+      );
+    }
+
+    // ── Red flag symptoms checkbox group ───────────────────────────────────
+    if (q.type === "checkbox-group") {
+      const flags: { field: keyof PreVisitFormData; l: string; icon: Icon }[] = [
+        { field: "symptomIncreasePain",    l: "Sudden increase in pain",         icon: AlertTriangle },
+        { field: "symptomSwelling",        l: "New swelling or redness",         icon: HeartPulse },
+        { field: "symptomGivingWay",       l: "Joint giving way or locking",     icon: Zap },
+        { field: "symptomFall",            l: "Fall related to the joint",       icon: Activity },
+        { field: "symptomWalkingDifficulty", l: "New difficulty walking",        icon: Footprints },
+        { field: "symptomNeuro",           l: "Numbness / tingling / weakness",  icon: Brain },
+        { field: "symptomFever",           l: "Fever or chills",                 icon: Thermometer },
+        { field: "symptomNone",            l: "None of the above",               icon: CheckCircle2 },
+      ];
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl mx-auto">
+          {flags.map(f => {
+            const checked = formData[f.field] as boolean;
+            const Icon = f.icon;
+            return (
+              <button key={f.field} type="button"
+                onClick={() => update({ [f.field]: !checked } as any)}
+                className={cn(
+                  "relative flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 min-h-[80px] transition-all text-center",
+                  checked ? "border-primary bg-primary/5 text-primary shadow-md" : "border-slate-200 bg-white text-slate-600 hover:border-primary/30",
+                  f.field === "symptomNone" ? (checked ? "" : "border-green-200 bg-green-50 text-green-700") : ""
+                )}
+              >
+                <Icon size={20} />
+                <span className="text-[11px] font-bold leading-snug">{f.l}</span>
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // ── Pain scale ─────────────────────────────────────────────────────────
+    if (q.type === "scale") {
+      const val = String(formData[q.field!] ?? "");
+      return <PainScale value={val} onChange={v => update({ [q.field!]: v } as any)} />;
+    }
+
+    // ── Radio options ──────────────────────────────────────────────────────
+    if (q.type === "radio" && q.opts) {
+      const val = formData[q.field!];
+      const cols = q.opts.length <= 2 ? "grid-cols-2" : q.opts.length <= 4 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5";
+      return (
+        <div className={cn("grid gap-3 w-full max-w-2xl mx-auto", cols)}>
+          {q.opts.map(opt => (
+            <OptionCard key={opt.v} opt={opt} selected={val === opt.v}
+              onClick={() => update({ [q.field!]: opt.v } as any)} />
           ))}
+        </div>
+      );
+    }
+
+    // ── Text / date ────────────────────────────────────────────────────────
+    if (q.type === "text" || q.type === "date") {
+      const val = String(formData[q.field!] ?? "");
+      if (q.type === "date") {
+        return <div className="w-full max-w-xs mx-auto"><DatePicker value={val} onChange={v => update({ [q.field!]: v } as any)} placeholder="Select date" /></div>;
+      }
+      return (
+        <input autoFocus value={val} onChange={e => update({ [q.field!]: e.target.value } as any)}
+          onKeyDown={e => e.key === "Enter" && goNext()}
+          placeholder="Type your answer..."
+          className="w-full max-w-lg mx-auto block bg-transparent border-0 border-b-2 border-slate-300 focus:border-primary outline-none text-2xl font-bold text-slate-800 placeholder:text-slate-300 py-3 text-center transition-colors"
+        />
+      );
+    }
+
+    // ── Textarea ───────────────────────────────────────────────────────────
+    if (q.type === "textarea") {
+      const val = String(formData[q.field!] ?? "");
+      return (
+        <textarea autoFocus value={val} onChange={e => update({ [q.field!]: e.target.value } as any)}
+          placeholder="Type your answer..." rows={4}
+          className="w-full max-w-lg mx-auto block bg-slate-50 border border-slate-200 rounded-2xl outline-none text-[14px] text-slate-700 placeholder:text-slate-400 px-5 py-4 focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all resize-none"
+        />
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <div className="flex flex-col" style={{ minHeight: "calc(100vh - 200px)" }}>
+
+      {/* Progress bar */}
+      <div className="h-1 bg-slate-100 rounded-full overflow-hidden mb-4">
+        <div className="h-full bg-primary transition-all duration-500 ease-out rounded-full" style={{ width: `${progress}%` }} />
+      </div>
+
+      {/* Counter */}
+      <div className="flex items-center justify-between mb-6 text-[12px]">
+        <span className="font-bold text-slate-400 uppercase tracking-wide">{currentQ.section}</span>
+        <div className="flex items-center gap-2">
+          {currentQ.source && <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded font-mono">{currentQ.source}</span>}
+          <span className="font-bold text-slate-400">{qIdx + 1} / {questions.length}</span>
         </div>
       </div>
 
-      <Card className="shadow-sm border-border">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-display">{STEPS[step]}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {step === 0 && <StepHeader d={formData} u={update} />}
-          {step === 1 && <StepA d={formData} u={update} />}
-          {step === 2 && <StepB d={formData} u={update} />}
-          {step === 3 && <StepC d={formData} u={update} />}
-          {step === 4 && <StepD d={formData} u={update} />}
-          {step === 5 && <StepInstrument2 d={formData} u={update} />}
-        </CardContent>
-      </Card>
+      {/* Question + answer */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-8 py-4">
+        <h2 className="text-[22px] font-black text-slate-900 leading-snug tracking-tight text-center max-w-2xl">
+          {currentQ.label}
+        </h2>
+        {renderQuestion(currentQ)}
+        {currentQ.type === "text" && (
+          <p className="text-[11px] text-slate-400">Press Enter to continue</p>
+        )}
+      </div>
 
-      {/* Nav buttons */}
-      <div className="flex items-center justify-between mt-6 pb-8">
-        <Button type="button" variant="outline" onClick={goPrev} disabled={step === 0} className="h-12 px-6 text-[15px] gap-2">
-          <ChevronLeft className="w-4 h-4" /> Previous
-        </Button>
-        {step < totalSteps - 1 ? (
-          <Button type="button" onClick={goNext} className="h-12 px-8 text-[15px] gap-2">
-            Next <ChevronRight className="w-4 h-4" />
-          </Button>
+      {/* Navigation */}
+      <div className="flex items-center justify-between pt-6 mt-auto">
+        <button onClick={goPrev} disabled={qIdx === 0}
+          className="flex items-center gap-2 text-[13px] font-bold text-slate-400 hover:text-slate-700 transition-colors disabled:opacity-20 group">
+          <ChevronLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+          Back
+        </button>
+
+        {/* Mini dots */}
+        <div className="flex items-center gap-1.5">
+          {questions.slice(Math.max(0, qIdx - 4), qIdx + 5).map((_, i) => {
+            const idx = Math.max(0, qIdx - 4) + i;
+            return (
+              <div key={idx} className={cn("rounded-full transition-all",
+                idx === qIdx ? "w-6 h-2 bg-primary" : idx < qIdx ? "w-2 h-2 bg-primary/40" : "w-2 h-2 bg-slate-200"
+              )} />
+            );
+          })}
+        </div>
+
+        {qIdx === questions.length - 1 ? (
+          <button onClick={goNext}
+            className="flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-xl text-[12px] font-black shadow-md hover:brightness-110 transition-all">
+            <Check size={13} /> Submit
+          </button>
         ) : (
-          <Button type="button" onClick={handleSubmit} className="h-12 px-8 text-[15px] gap-2 bg-green-600 hover:bg-green-700">
-            <Check className="w-4 h-4" /> Submit Pre-Visit Form
-          </Button>
+          <button onClick={goNext}
+            className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-[12px] font-black shadow-md hover:brightness-110 transition-all group">
+            OK <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+          </button>
         )}
       </div>
     </div>
   );
 }
-
-
-
