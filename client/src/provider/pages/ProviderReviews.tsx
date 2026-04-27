@@ -208,244 +208,250 @@ function ReviewCard({ review, expanded, onToggle, isSurgeon }: { review: ReviewA
   const TypeIcon = typeConfig.icon;
   const patient = MOCK_PATIENTS.find((p) => p.id === review.patientId);
   const hasJourney = review.waitlistSummary && (review.type === "E-consult" || review.type === "Escalation consult");
+  const hasEConsultDashboard = review.type === "E-consult" || review.type === "Escalation consult";
 
   function handleSave() { setSaved(true); setTimeout(() => setSaved(false), 2000); }
 
   return (
-    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden transition-all duration-150">
-      <button onClick={onToggle} className="w-full flex items-center gap-4 p-4 text-left hover:bg-muted/30 transition-colors">
-        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", typeConfig.bg)}><TypeIcon className={cn("w-4 h-4", typeConfig.text)} /></div>
+    <div className={cn("bg-card rounded-xl border shadow-sm overflow-hidden transition-all duration-200", expanded ? "border-primary/20 shadow-md" : "border-border hover:shadow-md")}>
+      {/* Card Header */}
+      <button onClick={onToggle} className="w-full flex items-center gap-4 p-4 text-left hover:bg-muted/20 transition-colors">
+        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm", typeConfig.bg)}>
+          <TypeIcon className={cn("w-4 h-4", typeConfig.text)} />
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-semibold text-foreground">{review.patientName}</p>
-            <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", typeConfig.bg, typeConfig.text)}>{review.type}</span>
-            <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", priorityStyle.bg, priorityStyle.text)}>{review.priority}</span>
+            <p className="text-sm font-bold text-foreground">{review.patientName}</p>
+            <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full", typeConfig.bg, typeConfig.text)}>{review.type}</span>
+            <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full", priorityStyle.bg, priorityStyle.text)}>{review.priority}</span>
             {review.waitlistSummary?.isEarlyEscalation && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-600">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600">
                 <AlertTriangle className="w-3 h-3" />Early Trigger
               </span>
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 truncate">{review.description}</p>
         </div>
-        <span className={cn("inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full shrink-0", statusStyle.bg, statusStyle.text)}>
-          <span className={cn("w-1.5 h-1.5 rounded-full", statusStyle.dot)} />{review.status}
-        </span>
-        <span className="text-xs text-muted-foreground shrink-0">{review.createdDate}</span>
-        <ChevronDown className={cn("w-4 h-4 text-muted-foreground shrink-0 transition-transform", expanded && "rotate-180")} />
+        <div className="flex items-center gap-3 shrink-0">
+          <span className={cn("inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full", statusStyle.bg, statusStyle.text)}>
+            <span className={cn("w-1.5 h-1.5 rounded-full", statusStyle.dot)} />{review.status}
+          </span>
+          <span className="text-xs text-muted-foreground hidden sm:block">{review.createdDate}</span>
+          <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", expanded && "rotate-180")} />
+        </div>
       </button>
 
       {expanded && (
-        <div className="border-t border-border p-4 bg-muted/20">
-          {/* Waitlist Journey Summary for E-consults and Escalations */}
-          {hasJourney && review.waitlistSummary && (
-            <div className="mb-5">
-              {/* Escalation warning banner */}
-              {review.waitlistSummary.isEarlyEscalation && review.waitlistSummary.escalationReason && (
-                <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-100 rounded-lg mb-4">
-                  <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-red-700">Early Escalation</p>
-                    <p className="text-xs text-red-600 mt-0.5">{review.waitlistSummary.escalationReason}</p>
-                  </div>
-                </div>
-              )}
+        <div className="border-t border-border">
+          {/* Top content area */}
+          <div className="p-5 bg-muted/10">
 
-              <h3 className="text-sm font-semibold font-display text-foreground mb-3 flex items-center gap-2">
-                <ClipboardList className="w-4 h-4 text-primary" />
-                Waitlist Journey Summary
-                <span className="text-xs font-normal text-muted-foreground ml-1">
-                  — {review.waitlistSummary.monthsOnWaitlist} months on waitlist
-                </span>
-              </h3>
-
-              {/* Summary stats row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                <div className="bg-white rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Calendar className="w-3.5 h-3.5" />Duration</div>
-                  <p className="text-lg font-bold font-display text-foreground">{review.waitlistSummary.monthsOnWaitlist}<span className="text-sm font-normal text-muted-foreground ml-1">months</span></p>
-                </div>
-                <div className="bg-white rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Video className="w-3.5 h-3.5" />Virtual Visits</div>
-                  <p className="text-lg font-bold font-display text-foreground">{review.waitlistSummary.virtualVisitsCompleted}<span className="text-sm font-normal text-muted-foreground ml-1">completed</span></p>
-                </div>
-                <div className="bg-white rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><FlaskConical className="w-3.5 h-3.5" />Investigations</div>
-                  <p className="text-lg font-bold font-display text-foreground">{review.waitlistSummary.investigationsCompleted.length}<span className="text-sm font-normal text-muted-foreground ml-1">completed</span></p>
-                </div>
-                <div className="bg-white rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Activity className="w-3.5 h-3.5" />Care Plan</div>
-                  <p className="text-lg font-bold font-display text-foreground">{review.waitlistSummary.carePlanItems.length}<span className="text-sm font-normal text-muted-foreground ml-1">items</span></p>
+            {/* Escalation warning */}
+            {hasJourney && review.waitlistSummary?.isEarlyEscalation && review.waitlistSummary.escalationReason && (
+              <div className="flex items-start gap-3 p-3.5 bg-red-50 border border-red-200 rounded-xl mb-5">
+                <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-red-700">Early Escalation Triggered</p>
+                  <p className="text-xs text-red-600 mt-0.5 leading-relaxed">{review.waitlistSummary.escalationReason}</p>
                 </div>
               </div>
+            )}
 
-              {/* Key Changes */}
-              <div className="bg-white rounded-lg border border-border p-4 mb-3">
-                <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2 flex items-center gap-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-primary" />Key Changes During Waitlist
-                </h4>
-                <ul className="space-y-1.5">
-                  {review.waitlistSummary.keyChanges.map((change, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                      <ArrowRight className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                      {change}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {/* 2-column layout: journey/details LEFT, actions RIGHT */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-6">
 
-              {/* Investigations & Care Plan side by side */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="bg-white rounded-lg border border-border p-4">
-                  <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">Investigations Completed</h4>
-                  <ul className="space-y-1">
-                    {review.waitlistSummary.investigationsCompleted.map((inv, i) => (
-                      <li key={i} className="text-sm text-muted-foreground flex items-center gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />{inv}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="bg-white rounded-lg border border-border p-4">
-                  <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">Care Plan Activities</h4>
-                  <ul className="space-y-1">
-                    {review.waitlistSummary.carePlanItems.map((item, i) => (
-                      <li key={i} className="text-sm text-muted-foreground flex items-center gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />{item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Triggered by */}
-              <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
-                <User className="w-3.5 h-3.5" />
-                Triggered by <span className="font-medium text-foreground">{review.waitlistSummary.triggeredBy}</span>
-                <span className="px-1.5 py-0.5 rounded bg-muted text-xs">{review.waitlistSummary.triggerRole === "waitlist-gp" ? "Waitlist GP" : "Virtual GP"}</span>
-                {review.waitlistSummary.triggerRole === "virtual-gp" && <span className="text-muted-foreground">via charting</span>}
-              </div>
-            </div>
-          )}
-
-          {/* Standard details for non-journey items, or patient summary alongside */}
-          {!hasJourney && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Review Details</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium">{review.type}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Assigned To</span><span className="font-medium">{review.assignedTo}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Created</span><span className="font-medium">{review.createdDate}</span></div>
-                  {review.surgeonName && <div className="flex justify-between"><span className="text-muted-foreground">Surgeon</span><span className="font-medium">{review.surgeonName}</span></div>}
-                </div>
-              </div>
-              {patient && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2"><User className="w-4 h-4 text-muted-foreground" />Patient Summary</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Condition</span><span className="font-medium">{patient.condition}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">DOB</span><span className="font-medium">{patient.dob}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span className="font-medium">{patient.status}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Triage Score</span><span className="font-medium">{patient.triageScore}/100</span></div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Patient info bar for journey items */}
-          {hasJourney && patient && (
-            <div className="flex flex-wrap items-center gap-4 p-3 bg-white rounded-lg border border-border mb-4 text-sm">
-              <div className="flex items-center gap-2"><User className="w-4 h-4 text-muted-foreground" /><span className="font-medium">{patient.name}</span></div>
-              <span className="text-muted-foreground">·</span>
-              <span className="text-muted-foreground">{patient.condition}</span>
-              <span className="text-muted-foreground">·</span>
-              <span className="text-muted-foreground">Triage: {patient.triageScore}/100</span>
-              {review.surgeonName && <>
-                <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground">Surgeon: <span className="font-medium text-foreground">{review.surgeonName}</span></span>
-              </>}
-            </div>
-          )}
-
-          {!hasJourney && (
-            <div className="p-3 bg-white rounded-lg border border-border mb-4"><p className="text-sm text-foreground">{review.description}</p></div>
-          )}
-
-          {/* Actions — role-specific */}
-          <div className="flex flex-wrap justify-end gap-2">
-            {/* E-consult actions */}
-            {review.type === "E-consult" && review.status !== "Complete" && (
-              <>
-                {isSurgeon ? (
+              {/* LEFT: Journey summary or standard details */}
+              <div>
+                {hasJourney && review.waitlistSummary ? (
                   <>
-                    <button onClick={() => setShowForm(!showForm)} className="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"><FileText className="w-4 h-4" />Review Consult</button>
-                    <button className="inline-flex items-center gap-2 px-3 py-2 border border-green-200 bg-green-50 text-green-700 text-sm font-medium rounded-md hover:bg-green-100 transition-colors"><CheckCircle2 className="w-4 h-4" />Accept for Surgery</button>
-                    <button className="inline-flex items-center gap-2 px-3 py-2 border border-amber-200 bg-amber-50 text-amber-700 text-sm font-medium rounded-md hover:bg-amber-100 transition-colors"><Send className="w-4 h-4" />Request More Info</button>
+                    {/* Patient strip */}
+                    {patient && (
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 pb-3 border-b border-border">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[11px] font-bold">
+                            {patient.name.split(" ").map(n => n[0]).join("")}
+                          </div>
+                          <span className="text-sm font-semibold text-foreground">{patient.name}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">{patient.condition}</span>
+                        <span className={cn(
+                          "text-[11px] font-bold px-2 py-0.5 rounded-full",
+                          patient.triageScore >= 75 ? "bg-red-50 text-red-600" :
+                          patient.triageScore >= 45 ? "bg-amber-50 text-amber-700" :
+                          "bg-green-50 text-green-600"
+                        )}>Triage {patient.triageScore}</span>
+                        {review.surgeonName && <span className="text-xs text-muted-foreground">→ {review.surgeonName}</span>}
+                      </div>
+                    )}
+
+                    {/* Journey header */}
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <ClipboardList className="w-3.5 h-3.5 text-primary" />
+                      Waitlist Journey — {review.waitlistSummary.monthsOnWaitlist} months
+                    </p>
+
+                    {/* Stats row */}
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      <div className="bg-white rounded-lg border border-border p-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-1"><Calendar className="w-3 h-3" />Duration</div>
+                        <p className="text-base font-bold font-display text-foreground">{review.waitlistSummary.monthsOnWaitlist}<span className="text-[11px] font-normal text-muted-foreground ml-0.5">mo</span></p>
+                      </div>
+                      <div className="bg-white rounded-lg border border-border p-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-1"><Video className="w-3 h-3" />Visits</div>
+                        <p className="text-base font-bold font-display text-foreground">{review.waitlistSummary.virtualVisitsCompleted}<span className="text-[11px] font-normal text-muted-foreground ml-0.5">done</span></p>
+                      </div>
+                      <div className="bg-white rounded-lg border border-border p-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-1"><FlaskConical className="w-3 h-3" />Tests</div>
+                        <p className="text-base font-bold font-display text-foreground">{review.waitlistSummary.investigationsCompleted.length}<span className="text-[11px] font-normal text-muted-foreground ml-0.5">done</span></p>
+                      </div>
+                    </div>
+
+                    {/* Key changes */}
+                    <div className="bg-white rounded-xl border border-border p-4 mb-3">
+                      <p className="text-[11px] font-bold text-foreground uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
+                        <TrendingUp className="w-3.5 h-3.5 text-primary" />Key Changes
+                      </p>
+                      <ul className="space-y-1.5">
+                        {review.waitlistSummary.keyChanges.map((change, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                            <ArrowRight className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" />{change}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Investigations + Care Plan */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="bg-white rounded-xl border border-border p-3.5">
+                        <p className="text-[11px] font-bold text-foreground uppercase tracking-wide mb-2">Investigations</p>
+                        <ul className="space-y-1">
+                          {review.waitlistSummary.investigationsCompleted.map((inv, i) => (
+                            <li key={i} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3 h-3 text-green-500 shrink-0" />{inv}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="bg-white rounded-xl border border-border p-3.5">
+                        <p className="text-[11px] font-bold text-foreground uppercase tracking-wide mb-2">Care Plan</p>
+                        <ul className="space-y-1">
+                          {review.waitlistSummary.carePlanItems.map((item, i) => (
+                            <li key={i} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3 h-3 text-green-500 shrink-0" />{item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Triggered by */}
+                    <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+                      <User className="w-3 h-3" />
+                      Triggered by <span className="font-medium text-foreground">{review.waitlistSummary.triggeredBy}</span>
+                      <span className="px-1.5 py-0.5 rounded-full bg-muted text-[10px] font-medium">{review.waitlistSummary.triggerRole === "waitlist-gp" ? "Waitlist GP" : "Virtual GP"}</span>
+                    </div>
                   </>
                 ) : (
-                  <>
-                    {review.status === "Outstanding" || review.status === "In progress" ? (
-                      <button onClick={() => setShowForm(!showForm)} className="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"><Send className="w-4 h-4" />Send to Surgeon</button>
-                    ) : (
-                      <button className="inline-flex items-center gap-2 px-3 py-2 border border-border text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"><FileText className="w-4 h-4" />View Sent Consult</button>
+                  /* Standard non-journey layout */
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-xl border border-border p-4">
+                      <p className="text-sm text-foreground leading-relaxed">{review.description}</p>
+                    </div>
+                    {patient && (
+                      <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm bg-white rounded-xl border border-border p-4">
+                        <span className="text-muted-foreground">Condition</span><span className="font-medium text-right">{patient.condition}</span>
+                        <span className="text-muted-foreground">DOB</span><span className="font-medium text-right">{patient.dob}</span>
+                        <span className="text-muted-foreground">Status</span><span className="font-medium text-right">{patient.status}</span>
+                        <span className="text-muted-foreground">Triage</span><span className="font-medium text-right">{patient.triageScore}/100</span>
+                        <span className="text-muted-foreground">Assigned To</span><span className="font-medium text-right">{review.assignedTo}</span>
+                        {review.surgeonName && <><span className="text-muted-foreground">Surgeon</span><span className="font-medium text-right">{review.surgeonName}</span></>}
+                      </div>
                     )}
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT: Action buttons column */}
+              <div className="flex flex-col gap-2">
+                {/* eConsult Summary — prominent CTA for E-consult/Escalation */}
+                {hasEConsultDashboard && (
+                  <Link href={`/econsult/${review.patientId}`}>
+                    <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-primary text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-primary/90 transition-all">
+                      <Activity className="w-4 h-4" />eConsult Summary
+                    </button>
+                  </Link>
+                )}
+
+                {/* Divider if both sections present */}
+                {hasEConsultDashboard && review.status !== "Complete" && (
+                  <div className="h-px bg-border my-1" />
+                )}
+
+                {/* E-consult actions */}
+                {review.type === "E-consult" && review.status !== "Complete" && (
+                  isSurgeon ? (
+                    <>
+                      <button onClick={() => setShowForm(!showForm)} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-border bg-white text-sm font-medium rounded-lg hover:bg-muted/50 transition-colors"><FileText className="w-4 h-4 text-muted-foreground" />Review Consult</button>
+                      <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-green-200 bg-green-50 text-green-700 text-sm font-medium rounded-lg hover:bg-green-100 transition-colors"><CheckCircle2 className="w-4 h-4" />Accept for Surgery</button>
+                      <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-amber-200 bg-amber-50 text-amber-700 text-sm font-medium rounded-lg hover:bg-amber-100 transition-colors"><Send className="w-4 h-4" />Request More Info</button>
+                    </>
+                  ) : (
+                    review.status === "Outstanding" || review.status === "In progress" ? (
+                      <button onClick={() => setShowForm(!showForm)} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-border bg-white text-sm font-medium rounded-lg hover:bg-muted/50 transition-colors"><Send className="w-4 h-4 text-muted-foreground" />Send to Surgeon</button>
+                    ) : (
+                      <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-border bg-white text-sm font-medium rounded-lg hover:bg-muted/50 transition-colors"><FileText className="w-4 h-4 text-muted-foreground" />View Sent Consult</button>
+                    )
+                  )
+                )}
+
+                {/* Escalation actions */}
+                {review.type === "Escalation consult" && review.status !== "Complete" && (
+                  isSurgeon ? (
+                    <>
+                      <button onClick={() => setShowForm(!showForm)} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-border bg-white text-sm font-medium rounded-lg hover:bg-muted/50 transition-colors"><Stethoscope className="w-4 h-4 text-muted-foreground" />Review Escalation</button>
+                      <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-green-200 bg-green-50 text-green-700 text-sm font-medium rounded-lg hover:bg-green-100 transition-colors"><CheckCircle2 className="w-4 h-4" />Accept for Surgery</button>
+                      <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-blue-200 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 transition-colors"><Video className="w-4 h-4" />Schedule Urgent Meeting</button>
+                      <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition-colors"><PhoneCall className="w-4 h-4" />VOIP GP</button>
+                    </>
+                  ) : (
+                    <>
+                      {(review.status === "Outstanding" || review.status === "In progress") ? (
+                        <button onClick={() => setShowForm(!showForm)} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-red-200 bg-red-50 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors"><AlertTriangle className="w-4 h-4" />Escalate to Surgeon</button>
+                      ) : (
+                        <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-border bg-white text-sm font-medium rounded-lg hover:bg-muted/50 transition-colors"><FileText className="w-4 h-4 text-muted-foreground" />View Escalation</button>
+                      )}
+                      <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition-colors"><PhoneCall className="w-4 h-4" />VOIP Surgeon</button>
+                    </>
+                  )
+                )}
+
+                {/* Investigation actions */}
+                {review.type === "Investigation" && review.status !== "Complete" && (
+                  <>
+                    <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-primary text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-primary/90 transition-colors"><CheckCircle2 className="w-4 h-4" />Approve Requisition</button>
+                    <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-border bg-white text-sm font-medium rounded-lg hover:bg-muted/50 transition-colors"><Send className="w-4 h-4 text-muted-foreground" />Fax to Patient</button>
+                    <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-border bg-white text-sm font-medium rounded-lg hover:bg-muted/50 transition-colors"><Send className="w-4 h-4 text-muted-foreground" />Email Patient</button>
                   </>
                 )}
-              </>
-            )}
-            {/* Escalation actions */}
-            {review.type === "Escalation consult" && review.status !== "Complete" && (
-              <>
-                {isSurgeon ? (
+
+                {/* Care coordination actions */}
+                {review.type === "Care coordination" && review.status !== "Complete" && (
                   <>
-                    <button onClick={() => setShowForm(!showForm)} className="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"><Stethoscope className="w-4 h-4" />Review Escalation</button>
-                    <button className="inline-flex items-center gap-2 px-3 py-2 border border-green-200 bg-green-50 text-green-700 text-sm font-medium rounded-md hover:bg-green-100 transition-colors"><CheckCircle2 className="w-4 h-4" />Accept for Surgery</button>
-                    <button className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"><Video className="w-4 h-4" />Schedule Urgent Meeting</button>
-                    <button className="inline-flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors"><PhoneCall className="w-4 h-4" />VOIP GP</button>
-                  </>
-                ) : (
-                  <>
-                    {review.status === "Outstanding" || review.status === "In progress" ? (
-                      <button onClick={() => setShowForm(!showForm)} className="inline-flex items-center gap-2 px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"><AlertTriangle className="w-4 h-4" />Escalate to Surgeon</button>
-                    ) : (
-                      <button className="inline-flex items-center gap-2 px-3 py-2 border border-border text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"><FileText className="w-4 h-4" />View Escalation</button>
-                    )}
-                    <button className="inline-flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors"><PhoneCall className="w-4 h-4" />VOIP Surgeon</button>
+                    <button onClick={() => setShowForm(!showForm)} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-primary text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-primary/90 transition-colors"><FileText className="w-4 h-4" />Document Progress</button>
+                    <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition-colors"><PhoneCall className="w-4 h-4" />VOIP Family</button>
+                    <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-border bg-white text-sm font-medium rounded-lg hover:bg-muted/50 transition-colors"><FileSearch className="w-4 h-4 text-muted-foreground" />Launch E-Advice</button>
                   </>
                 )}
-              </>
-            )}
-            {/* Investigation actions — unchanged */}
-            {review.type === "Investigation" && review.status !== "Complete" && (
-              <>
-                <button className="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"><CheckCircle2 className="w-4 h-4" />Approve Requisition</button>
-                <button className="inline-flex items-center gap-2 px-3 py-2 border border-border text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"><Send className="w-4 h-4" />Fax to Patient</button>
-                <button className="inline-flex items-center gap-2 px-3 py-2 border border-border text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"><Send className="w-4 h-4" />Email Patient</button>
-              </>
-            )}
-            {/* Care coordination actions — unchanged */}
-            {review.type === "Care coordination" && review.status !== "Complete" && (
-              <>
-                <button onClick={() => setShowForm(!showForm)} className="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"><FileText className="w-4 h-4" />Document Progress</button>
-                <button className="inline-flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors"><PhoneCall className="w-4 h-4" />VOIP Family</button>
-                <button className="inline-flex items-center gap-2 px-3 py-2 border border-border text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"><FileSearch className="w-4 h-4" />Launch E-Advice</button>
-              </>
-            )}
-            <button className="inline-flex items-center gap-2 px-3 py-2 border border-border text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"><User className="w-4 h-4" />Full Profile</button>
-            {(review.type === "E-consult" || review.type === "Escalation consult") && (
-              <Link href={`/econsult/${review.patientId}`}>
-                <button className="inline-flex items-center gap-2 px-3 py-2 border border-primary/20 bg-primary/5 text-primary text-sm font-medium rounded-md hover:bg-primary/10 transition-colors">
-                  <Activity className="w-4 h-4" />eConsult Summary
-                </button>
-              </Link>
-            )}
+
+                {/* Always present */}
+                <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-border bg-white text-sm font-medium rounded-lg hover:bg-muted/50 transition-colors mt-auto"><User className="w-4 h-4 text-muted-foreground" />Full Profile</button>
+              </div>
+            </div>
           </div>
 
-          {/* Inline form — role-specific */}
+          {/* Inline form */}
           {showForm && (
-            <div className="mt-4 p-5 bg-white rounded-xl border border-border shadow-sm">
+            <div className="border-t border-border p-5 bg-white">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-semibold font-display tracking-tight">
                   {isSurgeon && review.type === "E-consult" && "Surgical Assessment"}
@@ -454,7 +460,7 @@ function ReviewCard({ review, expanded, onToggle, isSurgeon }: { review: ReviewA
                   {!isSurgeon && review.type === "Escalation consult" && "Escalation Summary for Surgeon"}
                   {review.type === "Care coordination" && "Care Coordination Notes"}
                 </h3>
-                <button onClick={() => setShowForm(false)} className="p-1 rounded hover:bg-muted/50 text-muted-foreground"><X className="w-4 h-4" /></button>
+                <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground transition-colors"><X className="w-4 h-4" /></button>
               </div>
               <div className="space-y-4">
                 {isSurgeon && (review.type === "E-consult" || review.type === "Escalation consult") ? (
@@ -469,7 +475,10 @@ function ReviewCard({ review, expanded, onToggle, isSurgeon }: { review: ReviewA
                         <option>Request in-person consultation</option>
                       </select>
                     </div>
-                    <div><label className="text-sm font-medium block mb-1">Assessment Notes <span className="text-red-500">*</span></label><textarea className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder="Your surgical assessment based on the waitlist journey summary..." /></div>
+                    <div>
+                      <label className="text-sm font-medium block mb-1">Assessment Notes <span className="text-red-500">*</span></label>
+                      <textarea className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder="Your surgical assessment based on the waitlist journey summary..." />
+                    </div>
                     {review.type === "Escalation consult" && (
                       <div>
                         <label className="text-sm font-medium block mb-1">Urgency Recommendation</label>
@@ -483,8 +492,14 @@ function ReviewCard({ review, expanded, onToggle, isSurgeon }: { review: ReviewA
                   </>
                 ) : (
                   <>
-                    <div><label className="text-sm font-medium block mb-1">{review.type === "E-consult" || review.type === "Escalation consult" ? "Clinical Summary for Surgeon" : "Structured Assessment"} <span className="text-red-500">*</span></label><textarea className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder={review.type === "E-consult" ? "Summary of patient's waitlist journey and recommendation for surgeon..." : review.type === "Escalation consult" ? "Reason for early escalation and clinical concern..." : "Care coordination progress notes..."} /></div>
-                    <div><label className="text-sm font-medium block mb-1">Additional Notes</label><textarea className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[60px]" placeholder="Additional context for the surgeon..." /></div>
+                    <div>
+                      <label className="text-sm font-medium block mb-1">{review.type === "E-consult" || review.type === "Escalation consult" ? "Clinical Summary for Surgeon" : "Structured Assessment"} <span className="text-red-500">*</span></label>
+                      <textarea className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder={review.type === "E-consult" ? "Summary of patient's waitlist journey and recommendation for surgeon..." : review.type === "Escalation consult" ? "Reason for early escalation and clinical concern..." : "Care coordination progress notes..."} />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium block mb-1">Additional Notes</label>
+                      <textarea className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[60px]" placeholder="Additional context for the surgeon..." />
+                    </div>
                   </>
                 )}
                 {(review.type === "E-consult" || review.type === "Escalation consult") && (
