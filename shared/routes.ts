@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import {
   insertUserSchema,
+  insertAppointmentSchema,
+  insertTaskSchema,
   users,
   appointments,
   tasks,
@@ -102,4 +104,14 @@ export const api = {
     },
   },
 };
+
+export function buildUrl(path: string, params?: Record<string, string | number>): string {
+  let url = path;
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      url = url.replace(`:${key}`, String(value));
+    }
+  }
+  return url;
+}
 
