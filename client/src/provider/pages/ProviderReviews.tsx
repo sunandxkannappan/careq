@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { Link } from "wouter";
 import { ProviderLayout } from "@/provider/components/ProviderLayout";
 import { cn } from "@/lib/utils";
 import { useRole, canAccessReviewTab, type ReviewTab } from "@/provider/lib/RoleContext";
@@ -433,6 +434,13 @@ function ReviewCard({ review, expanded, onToggle, isSurgeon }: { review: ReviewA
               </>
             )}
             <button className="inline-flex items-center gap-2 px-3 py-2 border border-border text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"><User className="w-4 h-4" />Full Profile</button>
+            {(review.type === "E-consult" || review.type === "Escalation consult") && (
+              <Link href={`/econsult/${review.patientId}`}>
+                <button className="inline-flex items-center gap-2 px-3 py-2 border border-primary/20 bg-primary/5 text-primary text-sm font-medium rounded-md hover:bg-primary/10 transition-colors">
+                  <Activity className="w-4 h-4" />eConsult Summary
+                </button>
+              </Link>
+            )}
           </div>
 
           {/* Inline form — role-specific */}

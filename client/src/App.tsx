@@ -39,10 +39,15 @@ import ProviderEarnings from "@/provider/pages/ProviderEarnings";
 import ProviderAccount from "@/provider/pages/ProviderAccount";
 import ProviderVirtualCall from "@/provider/pages/ProviderVirtualCall";
 import FormsHub from "@/provider/pages/FormsHub";
+import EConsultDashboard from "@/provider/pages/EConsultDashboard";
 import { RoleProvider } from "@/provider/lib/RoleContext";
 
 function VirtualCallRoute({ params }: { params: { mode: string; id: string } }) {
   return <ProviderVirtualCall apptId={params.id} mode={params.mode as "zoom" | "voip"} />;
+}
+
+function EConsultRoute({ params }: { params: { patientId: string } }) {
+  return <EConsultDashboard patientId={params.patientId} />;
 }
 
 function PatientRoutes() {
@@ -93,6 +98,7 @@ function ProviderRoutes() {
           <Route path="/earnings" component={ProviderEarnings} />
           <Route path="/account" component={ProviderAccount} />
           <Route path="/forms" component={FormsHub} />
+          <Route path="/econsult/:patientId" component={EConsultRoute} />
           <Route component={NotFound} />
         </Switch>
       </RoleProvider>

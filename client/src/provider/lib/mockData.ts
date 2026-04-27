@@ -63,6 +63,58 @@ export interface ReviewActivity {
   waitlistSummary?: WaitlistJourneySummary;
 }
 
+// ─── eConsult Dashboard Types ─────────────────────────────
+
+export type TreatmentResponse = 'improvement' | 'partial' | 'none' | 'worsening';
+
+export interface MetricDataPoint {
+  date: string;
+  value: number;
+  note?: string;
+}
+
+export interface SymptomDataPoint {
+  date: string;
+  score: number;
+  note?: string;
+}
+
+export interface TreatmentAttempt {
+  id: string;
+  name: string;
+  category: 'medication' | 'therapy' | 'procedure' | 'lifestyle' | 'investigation';
+  startDate: string;
+  endDate?: string;
+  response: TreatmentResponse;
+  responseNote: string;
+  prescribedBy?: string;
+}
+
+export interface PatientImage {
+  id: string;
+  url: string;
+  date: string;
+  label: string;
+  type: 'clinical-photo' | 'imaging' | 'diagram';
+}
+
+export interface EConsultPatient {
+  patientId: string;
+  consultReason: string;
+  programStartDate: string;
+  lastUpdated: string;
+  programDurationMonths: number;
+  bmiHistory: MetricDataPoint[];
+  weightHistory: MetricDataPoint[];
+  symptomScores: SymptomDataPoint[];
+  treatments: TreatmentAttempt[];
+  conditions: { name: string; diagnosedDate: string; status: 'active' | 'resolved' | 'managed' }[];
+  images: PatientImage[];
+  assessmentNotes: string;
+  planItems: string[];
+  clinicianNotes?: string;
+}
+
 export interface BillingActivity {
   id: string;
   date: string;
@@ -812,4 +864,196 @@ export const MOCK_EARNINGS: EarningsSummary[] = [
   { period: "Feb 10–16",      total: 348.76, submitted: 0,      paid: 348.76, pending: 0      },
   { period: "Feb 3–9",        total: 502.32, submitted: 0,      paid: 502.32, pending: 0      },
   { period: "Jan 27–Feb 2",   total: 386.40, submitted: 0,      paid: 386.40, pending: 0      },
+];
+
+// ─── eConsult Dashboard Data ──────────────────────────────
+
+export const MOCK_ECONSULT_PATIENTS: EConsultPatient[] = [
+  {
+    patientId: "p6",
+    consultReason: "Right total knee replacement (revision) — Failed conservative management over 8 months. Patient reports worsening pain and functional decline despite multimodal approach.",
+    programStartDate: "2025-07-15",
+    lastUpdated: "2026-03-10",
+    programDurationMonths: 8,
+    bmiHistory: [
+      { date: "2025-07", value: 31.2 },
+      { date: "2025-09", value: 30.5 },
+      { date: "2025-11", value: 29.8 },
+      { date: "2026-01", value: 29.1 },
+      { date: "2026-03", value: 28.5, note: "Weight mgmt program effective" },
+    ],
+    weightHistory: [
+      { date: "2025-07", value: 98.2 },
+      { date: "2025-09", value: 96.0 },
+      { date: "2025-11", value: 93.8 },
+      { date: "2026-01", value: 91.5 },
+      { date: "2026-03", value: 89.7 },
+    ],
+    symptomScores: [
+      { date: "2025-07", score: 4, note: "Baseline at referral" },
+      { date: "2025-08", score: 4 },
+      { date: "2025-09", score: 5, note: "Increased activity with physio" },
+      { date: "2025-10", score: 5 },
+      { date: "2025-11", score: 6, note: "Cortisone wore off, pain escalating" },
+      { date: "2025-12", score: 6 },
+      { date: "2026-01", score: 7, note: "Now using cane regularly" },
+      { date: "2026-02", score: 7 },
+      { date: "2026-03", score: 7, note: "Functional decline — difficulty with stairs" },
+    ],
+    treatments: [
+      {
+        id: "t1",
+        name: "Physiotherapy (12 sessions)",
+        category: "therapy",
+        startDate: "2025-07-20",
+        endDate: "2025-10-15",
+        response: "partial",
+        responseNote: "Initial improvement in ROM, plateaued after 8 sessions. Strength gains but no pain reduction.",
+        prescribedBy: "Dr. Reynolds",
+      },
+      {
+        id: "t2",
+        name: "Celebrex 200mg daily",
+        category: "medication",
+        startDate: "2025-08-01",
+        endDate: "2025-11-30",
+        response: "partial",
+        responseNote: "Mild pain relief first 6 weeks, then diminishing returns. Discontinued due to GI side effects.",
+        prescribedBy: "Dr. Reynolds",
+      },
+      {
+        id: "t3",
+        name: "Weight Management Program",
+        category: "lifestyle",
+        startDate: "2025-08-15",
+        response: "improvement",
+        responseNote: "BMI reduced from 31.2 to 28.5. Patient engaged and motivated. Ongoing.",
+        prescribedBy: "Nurse Johnson",
+      },
+      {
+        id: "t4",
+        name: "Cortisone Injection (R knee)",
+        category: "procedure",
+        startDate: "2025-09-20",
+        endDate: "2025-11-15",
+        response: "none",
+        responseNote: "Temporary relief for ~3 weeks, then full return of symptoms. No sustained benefit.",
+        prescribedBy: "Dr. Patel",
+      },
+      {
+        id: "t5",
+        name: "Knee Bracing (unloader)",
+        category: "therapy",
+        startDate: "2025-10-01",
+        response: "partial",
+        responseNote: "Improved stability and confidence walking. Pain still present but slightly better with brace. Ongoing.",
+        prescribedBy: "Dr. Reynolds",
+      },
+      {
+        id: "t6",
+        name: "Aquatic Therapy (8 sessions)",
+        category: "therapy",
+        startDate: "2025-12-01",
+        endDate: "2026-02-15",
+        response: "improvement",
+        responseNote: "Improved mobility and reduced stiffness. Patient reports best functional gains from this intervention.",
+        prescribedBy: "Nurse Johnson",
+      },
+    ],
+    conditions: [
+      { name: "Right knee osteoarthritis (revision candidate)", diagnosedDate: "2025-07", status: "active" },
+      { name: "Previous R TKR", diagnosedDate: "2020-03", status: "managed" },
+      { name: "Type 2 Diabetes", diagnosedDate: "2015-06", status: "managed" },
+      { name: "Hypertension", diagnosedDate: "2012-01", status: "managed" },
+      { name: "CABG (coronary artery bypass)", diagnosedDate: "2018-11", status: "resolved" },
+    ],
+    images: [
+      { id: "img1", url: "", date: "2025-07-20", label: "R Knee AP X-ray (Baseline)", type: "imaging" },
+      { id: "img2", url: "", date: "2025-11-05", label: "R Knee MRI", type: "imaging" },
+      { id: "img3", url: "", date: "2026-02-10", label: "R Knee AP X-ray (Follow-up)", type: "imaging" },
+    ],
+    assessmentNotes: "71-year-old male with failed R TKR (2020) presenting with progressive pain and functional decline over 8 months despite multimodal conservative management. BMI has improved from 31.2 to 28.5 through weight management program (positive). However, pain scores have worsened from 4/10 to 7/10 with cortisone injection providing no sustained benefit. Aquatic therapy provided best functional gains but insufficient for pain control. Patient now requires a cane for ambulation and reports difficulty with stairs and ADLs. Given failed conservative management, progressive symptoms, and improved surgical candidacy (lower BMI, engaged patient), revision TKR should be strongly considered.",
+    planItems: [
+      "Recommend revision R TKR — conservative management exhausted",
+      "Pre-surgical optimization: continue weight management, target BMI < 28",
+      "Cardiology clearance required given CABG history (2018)",
+      "Endocrine consult for perioperative diabetes management",
+      "Continue aquatic therapy for pre-hab until surgery date",
+      "Patient counseled on revision TKR expectations and recovery timeline",
+    ],
+    clinicianNotes: "Patient is well-informed and motivated. Strong family support. Revision TKR is appropriate given trajectory. Surgical risk is moderate due to cardiac and metabolic history — ensure clearances obtained.",
+  },
+  {
+    patientId: "p2",
+    consultReason: "Left hip osteoarthritis — Progressive deterioration, assessing surgical readiness.",
+    programStartDate: "2025-09-20",
+    lastUpdated: "2026-03-08",
+    programDurationMonths: 6,
+    bmiHistory: [
+      { date: "2025-09", value: 27.1 },
+      { date: "2025-11", value: 27.0 },
+      { date: "2026-01", value: 26.8 },
+      { date: "2026-03", value: 26.5 },
+    ],
+    weightHistory: [
+      { date: "2025-09", value: 72.5 },
+      { date: "2025-11", value: 72.1 },
+      { date: "2026-01", value: 71.6 },
+      { date: "2026-03", value: 70.8 },
+    ],
+    symptomScores: [
+      { date: "2025-09", score: 6, note: "Baseline at referral" },
+      { date: "2025-10", score: 6 },
+      { date: "2025-11", score: 5, note: "Mild improvement with physio" },
+      { date: "2025-12", score: 5 },
+      { date: "2026-01", score: 5 },
+      { date: "2026-02", score: 6, note: "Winter exacerbation" },
+      { date: "2026-03", score: 6 },
+    ],
+    treatments: [
+      {
+        id: "t1",
+        name: "Physiotherapy (16 sessions)",
+        category: "therapy",
+        startDate: "2025-10-01",
+        response: "partial",
+        responseNote: "Improved hip flexion range. Pain unchanged at rest but slightly better with movement.",
+        prescribedBy: "Dr. Reynolds",
+      },
+      {
+        id: "t2",
+        name: "Celebrex 200mg daily",
+        category: "medication",
+        startDate: "2025-10-15",
+        response: "partial",
+        responseNote: "Moderate pain relief. Well tolerated. Ongoing.",
+        prescribedBy: "Dr. Reynolds",
+      },
+      {
+        id: "t3",
+        name: "Hip cortisone injection",
+        category: "procedure",
+        startDate: "2025-12-10",
+        response: "improvement",
+        responseNote: "Good relief lasting ~8 weeks. Confirms intra-articular source of pain.",
+        prescribedBy: "Dr. Nguyen",
+      },
+    ],
+    conditions: [
+      { name: "Left hip osteoarthritis (severe)", diagnosedDate: "2024-03", status: "active" },
+      { name: "Hypertension", diagnosedDate: "2019-05", status: "managed" },
+      { name: "Type 2 Diabetes", diagnosedDate: "2020-08", status: "managed" },
+    ],
+    images: [
+      { id: "img1", url: "", date: "2025-09-25", label: "L Hip AP X-ray", type: "imaging" },
+      { id: "img2", url: "", date: "2026-01-15", label: "L Hip Lateral X-ray", type: "imaging" },
+    ],
+    assessmentNotes: "53-year-old female with progressive left hip OA over 6 months. Cortisone injection provided good temporary relief, confirming diagnosis. Conservative management has provided modest benefit. Patient is a reasonable surgical candidate with well-controlled comorbidities. May benefit from continued conservative management with reassessment in 3 months.",
+    planItems: [
+      "Continue current conservative management for 3 more months",
+      "Repeat cortisone injection if symptoms worsen before reassessment",
+      "Consider total hip arthroplasty if no sustained improvement by June 2026",
+      "Continue Celebrex and physiotherapy maintenance",
+    ],
+  },
 ];
