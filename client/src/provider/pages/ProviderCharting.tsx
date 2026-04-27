@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  CheckCircle2, 
-  Clock, 
-  ChevronDown, 
-  ChevronUp, 
-  FileText, 
-  Eye, 
-  Stethoscope, 
+  CheckCircle2,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Eye,
+  Stethoscope,
   Activity,
   User,
   Pill,
   Shield,
   X,
-  Loader2
+  Loader2,
+  ExternalLink
 } from 'lucide-react';
 import { ProviderLayout } from "@/provider/components/ProviderLayout";
 import { ChartingPanel, PreChartPanel, EAdvicePanel } from '@/provider/components/ClinicalPanels';
@@ -400,13 +401,19 @@ export default function ProviderCharting() {
                               <button className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-semibold shadow-sm hover:bg-slate-50 transition-all">
                                 <FileText size={16} className="text-slate-400" /> Download PDF
                               </button>
+                              <button className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-semibold shadow-sm hover:bg-slate-50 transition-all">
+                                <ExternalLink size={16} className="text-slate-400" /> Launch Alberta Netcare
+                              </button>
                             </>
                           ) : activeTopTab === 'e-advice' ? (
                             <>
-                              <button 
+                              <button
                                 onClick={() => setActiveForm({ type: 'e-advice', meetingId: task.meetingId, patientId: task.patientId, patientName: task.patientName, phn: task.summary.phn, dob: task.summary.dob })}
                                 className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-[#059669] text-white rounded-lg text-sm font-bold shadow-sm hover:bg-opacity-90 transition-all">
                                 <FileText size={16} /> Launch E-Advice
+                              </button>
+                              <button className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-semibold shadow-sm hover:bg-slate-50 transition-all">
+                                <ExternalLink size={16} className="text-slate-400" /> Launch Alberta Netcare
                               </button>
                             </>
                           ) : (
